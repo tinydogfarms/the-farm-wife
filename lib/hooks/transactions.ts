@@ -73,6 +73,53 @@ export function useTransactions() {
     }
   };
 
+  // Update transaction
+  const updateTransaction = async (id: string, transactionData: TransactionInput) => {
+    if (!user) return { error: 'User not authenticated' };
+
+    try {
+      let receiptImageUrl = transactionData.receipt_image;
+      
+      // If receipt_image is a local file URI (not already a URL), upload it
+      if (transactionData.receipt_image && 
+          !transactionData.receipt_image.startsWith('http') && 
+          !transactionData.receipt_image.startsWith('blob:')) {
+        const { publicUrl, error: uploadError } = await StorageService.uploadReceiptImage(
+          transactionData.receipt_image,
+          user.id
+        );
+        
+        if (uploadError) {
+          return { data: null, error: getReadableError(uploadError) };
+        }
+        
+        receiptImageUrl = publicUrl;
+      }
+
+      // Update transaction with receipt URL
+      const { data, error } = await supabase
+        .from('transactions')
+        .update({
+          ...transactionData,
+          amount: parseFloat(transactionData.amount.toString()),
+          receipt_image: receiptImageUrl
+        })
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (!error && data) {
+        setTransactions(prev => prev.map(t => t.id === id ? data : t));
+      }
+
+      return { data, error: error ? getReadableError(error) : null };
+      
+    } catch (error) {
+      return { data: null, error: getReadableError(error) };
+    }
+  };
+
   // Delete transaction
   const deleteTransaction = async (id: string) => {
     const { error } = await supabase
@@ -120,6 +167,7 @@ export function useTransactions() {
     transactions,
     loading,
     addTransaction,
+    updateTransaction,
     deleteTransaction,
     getTotals,
     getCategoryTotals,

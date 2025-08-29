@@ -4,19 +4,25 @@ import type { Transaction } from '../lib/types';
 interface TransactionListProps {
   transactions: Transaction[];
   onDelete: (id: string) => void;
+  onEdit: (transaction: Transaction) => void;
 }
 
-export default function TransactionList({ transactions, onDelete }: TransactionListProps) {
+export default function TransactionList({ transactions, onDelete, onEdit }: TransactionListProps) {
   return (
     <View style={styles.transactionsCard}>
       <Text style={styles.formTitle}>Recent Transactions ({transactions.length})</Text>
       {transactions.slice(0, 10).map((transaction) => (
-        <View key={transaction.id} style={styles.transactionItem}>
+        <TouchableOpacity
+          key={transaction.id}
+          style={styles.transactionItem}
+          onPress={() => onEdit(transaction)}
+          activeOpacity={0.7}
+        >
           <View style={styles.transactionMain}>
             <View style={styles.transactionInfo}>
               <Text style={styles.transactionDate}>{transaction.date}</Text>
-              <Text style={styles.transactionDescription}>{transaction.description}</Text>
               <Text style={styles.transactionCategory}>{transaction.category}</Text>
+              <Text style={styles.transactionDescription}>{transaction.description}</Text>
             </View>
             {transaction.receipt_image && (
               <Image source={{ uri: transaction.receipt_image }} style={styles.receiptThumbnail} />
@@ -30,13 +36,16 @@ export default function TransactionList({ transactions, onDelete }: TransactionL
               {transaction.type === 'income' ? '+' : '-'}${parseFloat(transaction.amount.toString()).toLocaleString()}
             </Text>
             <TouchableOpacity
-              onPress={() => onDelete(transaction.id)}
+              onPress={(e) => {
+                e.stopPropagation();
+                onDelete(transaction.id);
+              }}
               style={styles.deleteButton}
             >
               <Text style={styles.deleteText}>Delete</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </TouchableOpacity>
       ))}
       {transactions.length === 0 && (
         <View style={styles.emptyState}>
@@ -88,12 +97,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
-  transactionDescription: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginVertical: 2,
-  },
   transactionCategory: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginVertical: 2,
+    color: '#000',
+  },
+  transactionDescription: {
     fontSize: 12,
     color: '#666',
   },

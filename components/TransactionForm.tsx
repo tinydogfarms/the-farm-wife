@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import type { TransactionInput } from '../lib/types';
+import type { TransactionInput, Transaction } from '../lib/types';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../lib/constants';
 import { validateTransaction, getReadableError } from '../lib/utils/errorHandler';
 import Dropdown from './Dropdown';
@@ -9,10 +9,13 @@ import ReceiptCapture from './ReceiptCapture';
 interface TransactionFormProps {
   onSubmit: (data: TransactionInput) => Promise<void>;
   initialData?: Partial<TransactionInput>;
+  editTransaction?: Transaction;
+  onUpdate?: (id: string, data: TransactionInput) => Promise<void>;
+  onCancel?: () => void;
 }
 
 
-export default function TransactionForm({ onSubmit, initialData }: TransactionFormProps) {
+export default function TransactionForm({ onSubmit, initialData, editTransaction, onUpdate, onCancel }: TransactionFormProps) {
   const [formData, setFormData] = useState<TransactionInput>({
     date: new Date().toISOString().split('T')[0],
     type: 'expense',
@@ -21,20 +24,44 @@ export default function TransactionForm({ onSubmit, initialData }: TransactionFo
     amount: 0,
     method: 'cash',
     receipt_image: '',
-    ...initialData
+    ...initialData,
+    ...(editTransaction && {
+      date: editTransaction.date,
+      type: editTransaction.type,
+      category: editTransaction.category,
+      description: editTransaction.description,
+      amount: editTransaction.amount,
+      method: editTransaction.method,
+      receipt_image: editTransaction.receipt_image || ''
+    })
   });
 
   const [loading, setLoading] = useState(false);
 
   // Update form when initialData changes (from natural language parsing)
   useEffect(() => {
-    if (initialData && Object.keys(initialData).length > 0) {
+    if (initialData && Object.keys(initialData).length > 0 && !editTransaction) {
       setFormData(prev => ({
         ...prev,
         ...initialData
       }));
     }
-  }, [initialData]);
+  }, [initialData, editTransaction]);
+
+  // Update form when editTransaction changes
+  useEffect(() => {
+    if (editTransaction) {
+      setFormData({
+        date: editTransaction.date,
+        type: editTransaction.type,
+        category: editTransaction.category,
+        description: editTransaction.description,
+        amount: editTransaction.amount,
+        method: editTransaction.method,
+        receipt_image: editTransaction.receipt_image || ''
+      });
+    }
+  }, [editTransaction]);
 
   const categories = formData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
@@ -48,18 +75,24 @@ export default function TransactionForm({ onSubmit, initialData }: TransactionFo
 
     setLoading(true);
     try {
-      await onSubmit(formData);
-      // Reset form
-      setFormData({
-        date: new Date().toISOString().split('T')[0],
-        type: 'expense',
-        category: '',
-        description: '',
-        amount: 0,
-        method: 'cash',
-        receipt_image: ''
-      });
-      Alert.alert('Success', 'Transaction added!');
+      if (editTransaction && onUpdate) {
+        await onUpdate(editTransaction.id, formData);
+        Alert.alert('Success', 'Transaction updated!');
+        onCancel?.();
+      } else {
+        await onSubmit(formData);
+        // Reset form only when adding new transaction
+        setFormData({
+          date: new Date().toISOString().split('T')[0],
+          type: 'expense',
+          category: '',
+          description: '',
+          amount: 0,
+          method: 'cash',
+          receipt_image: ''
+        });
+        Alert.alert('Success', 'Transaction added!');
+      }
     } catch (error) {
       const readableError = getReadableError(error);
       Alert.alert('Error', readableError);
@@ -68,9 +101,13 @@ export default function TransactionForm({ onSubmit, initialData }: TransactionFo
     }
   };
 
+  const handleCancel = () => {
+    onCancel?.();
+  };
+
   return (
     <View style={styles.formCard}>
-      <Text style={styles.formTitle}>Add Transaction</Text>
+      <Text style={styles.formTitle}>{editTransaction ? 'Edit Transaction' : 'Add Transaction'}</Text>
       
       <Text style={styles.label}>Date</Text>
       <TextInput
@@ -130,15 +167,25 @@ export default function TransactionForm({ onSubmit, initialData }: TransactionFo
         capturedImage={formData.receipt_image}
       />
 
-      <TouchableOpacity 
-        style={[styles.addButton, loading && styles.disabledButton]} 
-        onPress={handleSubmit}
-        disabled={loading}
-      >
-        <Text style={styles.addButtonText}>
-          {loading ? 'Adding...' : 'Add Transaction'}
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+          style={[styles.addButton, loading && styles.disabledButton]} 
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          <Text style={styles.addButtonText}>
+            {loading ? (editTransaction ? 'Updating...' : 'Adding...') : (editTransaction ? 'Update Transaction' : 'Add Transaction')}
+          </Text>
+        </TouchableOpacity>
+        {editTransaction && (
+          <TouchableOpacity 
+            style={styles.cancelButton}
+            onPress={handleCancel}
+          >
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
@@ -191,16 +238,33 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   addButton: {
+    flex: 1,
     backgroundColor: '#10b981',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 16,
   },
   disabledButton: {
     backgroundColor: '#9ca3af',
   },
   addButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 16,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#6b7280',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
