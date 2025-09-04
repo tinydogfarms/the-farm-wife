@@ -1,5 +1,6 @@
 import { supabase } from './client';
 import * as FileSystem from 'expo-file-system';
+import { Platform } from 'react-native';
 
 export class StorageService {
   private static readonly BUCKET_NAME = 'receipts';
@@ -22,23 +23,48 @@ export class StorageService {
       const randomId = Math.random().toString(36).substring(2);
       const fileName = `${userId}/${timestamp}_${randomId}.jpg`;
 
-      // Read file as base64
-      const base64 = await FileSystem.readAsStringAsync(imageUri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      let fileData: Uint8Array;
 
-      // Convert base64 to blob-like format for upload
-      const byteCharacters = atob(base64);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      // Handle different platforms
+      if (Platform.OS === 'web') {
+        // Web platform - handle blob URLs and data URLs
+        if (imageUri.startsWith('blob:')) {
+          // Fetch blob data
+          const response = await fetch(imageUri);
+          const blob = await response.blob();
+          const arrayBuffer = await blob.arrayBuffer();
+          fileData = new Uint8Array(arrayBuffer);
+        } else if (imageUri.startsWith('data:')) {
+          // Data URL - extract base64 part
+          const base64 = imageUri.split(',')[1];
+          const byteCharacters = atob(base64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          fileData = new Uint8Array(byteNumbers);
+        } else {
+          throw new Error('Unsupported image URI format for web');
+        }
+      } else {
+        // Mobile platform - use FileSystem
+        const base64 = await FileSystem.readAsStringAsync(imageUri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+
+        // Convert base64 to byte array
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        fileData = new Uint8Array(byteNumbers);
       }
-      const byteArray = new Uint8Array(byteNumbers);
 
       // Upload to Supabase storage
       const { data, error } = await supabase.storage
         .from(this.BUCKET_NAME)
-        .upload(fileName, byteArray, {
+        .upload(fileName, fileData, {
           contentType: 'image/jpeg',
           cacheControl: '3600',
         });

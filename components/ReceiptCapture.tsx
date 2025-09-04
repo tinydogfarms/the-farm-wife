@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Image, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Image, Modal, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
@@ -110,14 +110,24 @@ export default function ReceiptCapture({ onImageCaptured, capturedImage }: Recei
           </View>
         </View>
       ) : (
-        <View style={styles.captureOptions}>
-          <TouchableOpacity style={styles.captureButton} onPress={openCamera}>
-            <Text style={styles.captureButtonText}>📷 Take Photo</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.captureButton} onPress={pickFromGallery}>
-            <Text style={styles.captureButtonText}>📁 Choose from Gallery</Text>
-          </TouchableOpacity>
+        <View style={[styles.captureOptions, Platform.OS === 'web' && styles.singleButtonContainer]}>
+          {Platform.OS === 'web' ? (
+            // Web platform - single button for both camera and gallery
+            <TouchableOpacity style={[styles.captureButton, styles.singleButton]} onPress={pickFromGallery}>
+              <Text style={styles.captureButtonText}>📷 Take Photo or Choose from Gallery</Text>
+            </TouchableOpacity>
+          ) : (
+            // Mobile platform - separate buttons
+            <>
+              <TouchableOpacity style={styles.captureButton} onPress={openCamera}>
+                <Text style={styles.captureButtonText}>📷 Take Photo</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.captureButton} onPress={pickFromGallery}>
+                <Text style={styles.captureButtonText}>📁 Choose from Gallery</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       )}
 
@@ -218,6 +228,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     borderStyle: 'dashed',
+  },
+  singleButtonContainer: {
+    flexDirection: 'column',
+  },
+  singleButton: {
+    flex: 0,
+    width: '100%',
+    minHeight: 48,
   },
   captureButtonText: {
     fontSize: 14,
