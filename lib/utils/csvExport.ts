@@ -13,6 +13,17 @@ export interface CSVExportOptions {
   categories?: string[];
 }
 
+// Escapes a CSV field: doubles embedded quotes per CSV spec, and prefixes
+// values starting with =, +, -, or @ with a tab so spreadsheet apps don't
+// interpret them as formulas (CSV/formula injection).
+function escapeCSVField(value: string): string {
+  let escaped = value.replace(/"/g, '""');
+  if (/^[=+\-@]/.test(escaped)) {
+    escaped = `\t${escaped}`;
+  }
+  return `"${escaped}"`;
+}
+
 export function generateCSVContent(transactions: Transaction[], options: CSVExportOptions = {}): string {
   const {
     includeHeaders = true,
@@ -60,8 +71,8 @@ export function generateCSVContent(transactions: Transaction[], options: CSVExpo
     const row = [
       transaction.date,
       transaction.type,
-      `"${transaction.category}"`, // Quote category in case it contains commas
-      `"${transaction.description}"`, // Quote description in case it contains commas
+      escapeCSVField(transaction.category),
+      escapeCSVField(transaction.description),
       transaction.amount.toString(),
       transaction.method,
       transaction.receipt_image ? 'Yes' : 'No'

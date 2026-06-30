@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import type { Transaction } from '../lib/types';
 
 interface TransactionListProps {
@@ -8,6 +8,17 @@ interface TransactionListProps {
 }
 
 export default function TransactionList({ transactions, onDelete, onEdit }: TransactionListProps) {
+  const confirmDelete = (id: string) => {
+    Alert.alert(
+      'Delete Transaction',
+      'Are you sure you want to delete this transaction?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => onDelete(id) },
+      ]
+    );
+  };
+
   return (
     <View style={styles.transactionsCard}>
       <Text style={styles.formTitle}>Recent Transactions ({transactions.length})</Text>
@@ -38,7 +49,7 @@ export default function TransactionList({ transactions, onDelete, onEdit }: Tran
             <TouchableOpacity
               onPress={(e) => {
                 e.stopPropagation();
-                onDelete(transaction.id);
+                confirmDelete(transaction.id);
               }}
               style={styles.deleteButton}
             >
