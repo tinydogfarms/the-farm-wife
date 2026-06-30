@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "the-farm-wife-clean",
-    "slug": "the-farm-wife-clean",
+    "name": "the-farm-wife",
+    "slug": "the-farm-wife",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,10 +20,16 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.haynesaj1.thefarmwife"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "469744fa-d8b7-42fb-84c7-b08e8ce3223f"
+      }
     }
   }
 }

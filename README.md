@@ -41,7 +41,7 @@ A modern farm accounting app built with React Native and Expo. Designed specific
 1. **Clone the repository**
    ```bash
    git clone <your-repo-url>
-   cd the-farm-wife-clean
+   cd the-farm-wife
    ```
 
 2. **Install dependencies**

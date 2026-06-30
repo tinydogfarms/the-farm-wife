@@ -1,8 +1,10 @@
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { User } from '@supabase/supabase-js';
 import type { Transaction } from '../lib/types';
 import { exportTransactionsToCSV, getExportSummary } from '../lib/utils/csvExport';
+import DateRangePicker, { DateRange } from './DateRangePicker';
 
 interface AppHeaderProps {
   user: User | null;
@@ -12,26 +14,65 @@ interface AppHeaderProps {
 
 export default function AppHeader({ user, onSignOut, transactions }: AppHeaderProps) {
   const insets = useSafeAreaInsets();
+  const [showDatePicker, setShowDatePicker] = useState(false);
   
-  const handleExportCSV = async () => {
+  const handleExportCSV = () => {
     if (transactions.length === 0) {
       Alert.alert('No Data', 'No transactions available to export.');
       return;
     }
+    setShowDatePicker(true);
+  };
 
-    const summary = getExportSummary(transactions);
+  const handleDateRangeSelected = async (selectedDateRange: DateRange | null) => {
+    setShowDatePicker(false);
+    
+    // Create export options with date range
+    const exportOptions = selectedDateRange?.startDate || selectedDateRange?.endDate ? {
+      dateRange: {
+        startDate: selectedDateRange.startDate,
+        endDate: selectedDateRange.endDate
+      }
+    } : {};
+
+    const summary = getExportSummary(transactions, exportOptions);
+    
+    // Check if any transactions match the filter
+    if (summary.totalCount === 0) {
+      const rangeName = selectedDateRange?.label || 'selected date range';
+      Alert.alert('No Data', `No transactions found for ${rangeName}.`);
+      return;
+    }
+    
+    // For web, export directly (Alert dialogs don't work well in React Native Web)
+    if (typeof window !== 'undefined') {
+      const result = await exportTransactionsToCSV(transactions, exportOptions);
+      if (result.success) {
+        const rangeName = selectedDateRange?.label || 'all time';
+        Alert.alert('Success', `Transactions exported successfully for ${rangeName}!`);
+      } else {
+        Alert.alert('Export Failed', result.error || 'Unknown error occurred');
+      }
+      return;
+    }
+    
+    // For mobile, show confirmation dialog with summary
+    const rangeName = selectedDateRange?.label || 'all time';
+    const dateRangeText = summary.dateRange.start && summary.dateRange.end 
+      ? `\nDate Range: ${summary.dateRange.start} to ${summary.dateRange.end}`
+      : '';
     
     Alert.alert(
       'Export Transactions',
-      `Export ${summary.totalCount} transactions?\n\nIncome: ${summary.incomeCount} transactions ($${summary.totalIncome.toLocaleString()})\nExpenses: ${summary.expenseCount} transactions ($${summary.totalExpenses.toLocaleString()})`,
+      `Export ${summary.totalCount} transactions for ${rangeName}?${dateRangeText}\n\nIncome: ${summary.incomeCount} transactions ($${summary.totalIncome.toLocaleString()})\nExpenses: ${summary.expenseCount} transactions ($${summary.totalExpenses.toLocaleString()})`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Export',
           onPress: async () => {
-            const result = await exportTransactionsToCSV(transactions);
+            const result = await exportTransactionsToCSV(transactions, exportOptions);
             if (result.success) {
-              Alert.alert('Success', 'Transactions exported successfully!');
+              Alert.alert('Success', `Transactions exported successfully for ${rangeName}!`);
             } else {
               Alert.alert('Export Failed', result.error || 'Unknown error occurred');
             }
@@ -55,6 +96,32 @@ export default function AppHeader({ user, onSignOut, transactions }: AppHeaderPr
           </TouchableOpacity>
         </View>
       </View>
+      
+      {showDatePicker && (
+        <Modal
+          visible={showDatePicker}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setShowDatePicker(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Export Date Range</Text>
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(false)}
+                style={styles.closeButton}
+              >
+                <Text style={styles.closeText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <DateRangePicker 
+              onDateRangeSelect={handleDateRangeSelected}
+              transactions={transactions}
+              inline={true}
+            />
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -95,6 +162,7 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     gap: 8,
+    alignItems: 'center',
   },
   exportButton: {
     paddingVertical: 4,
@@ -106,5 +174,29 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     fontWeight: '600',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  closeText: {
+    fontSize: 18,
+    color: '#6b7280',
   },
 });
