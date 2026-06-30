@@ -25,7 +25,8 @@ export default function FarmAccountingApp() {
     const { error } = await addTransaction(transactionData);
     
     if (error) {
-      // Error is already processed by getReadableError in the hook\n      throw new Error(error);
+      // Error is already processed by getReadableError in the hook
+      throw new Error(error);
     }
   };
 
