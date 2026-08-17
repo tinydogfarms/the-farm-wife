@@ -2,7 +2,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuth } from './lib/hooks/auth';
 import LoginScreen from './app/auth/login';
-import FarmAccountingApp from './components/FarmAccountingApp';
+import AppShell from './components/AppShell';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -19,7 +19,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      {!user ? <LoginScreen /> : <FarmAccountingApp />}
+      {!user ? <LoginScreen /> : <AppShell />}
     </SafeAreaProvider>
   );
 }
