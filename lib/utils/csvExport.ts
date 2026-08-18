@@ -65,7 +65,7 @@ export function generateCSVContent(transactions: Transaction[], options: CSVExpo
 
   // Add headers
   if (includeHeaders) {
-    csvContent += 'Date,Type,Category,Description,Amount,Method,Receipt\n';
+    csvContent += 'Date,Type,Category,Description,Amount,Method,Receipt URL\n';
   }
 
   // Add transaction rows
@@ -77,7 +77,7 @@ export function generateCSVContent(transactions: Transaction[], options: CSVExpo
       escapeCSVField(transaction.description),
       transaction.amount.toString(),
       transaction.method,
-      transaction.receipt_image ? 'Yes' : 'No'
+      escapeCSVField(transaction.receipt_image || '')
     ].join(',');
     
     csvContent += row + '\n';
@@ -119,7 +119,7 @@ export async function exportTransactionsToCSV(
     // Generate CSV content
     const csvContent = generateCSVContent(transactions, options);
     
-    if (csvContent.trim() === '' || (options.includeHeaders !== false && csvContent.trim() === 'Date,Type,Category,Description,Amount,Method,Receipt')) {
+    if (csvContent.trim() === '' || (options.includeHeaders !== false && csvContent.trim() === 'Date,Type,Category,Description,Amount,Method,Receipt URL')) {
       return { success: false, error: 'No transactions to export' };
     }
 
