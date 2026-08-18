@@ -1,4 +1,6 @@
-import * as FileSystem from 'expo-file-system';
+// expo-file-system v19+ moved documentDirectory/EncodingType/writeAsStringAsync
+// off the main entry point onto this legacy subpath.
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import type { Transaction } from '../types';
