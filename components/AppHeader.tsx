@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Modal, Platform, InteractionManager } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { User } from '@supabase/supabase-js';
 import type { Transaction } from '../lib/types';
@@ -24,9 +24,7 @@ export default function AppHeader({ user, onSignOut, transactions }: AppHeaderPr
     setShowDatePicker(true);
   };
 
-  const handleDateRangeSelected = async (selectedDateRange: DateRange | null) => {
-    setShowDatePicker(false);
-    
+  const performExport = async (selectedDateRange: DateRange | null) => {
     // Create export options with date range
     const exportOptions = selectedDateRange?.startDate || selectedDateRange?.endDate ? {
       dateRange: {
@@ -36,16 +34,16 @@ export default function AppHeader({ user, onSignOut, transactions }: AppHeaderPr
     } : {};
 
     const summary = getExportSummary(transactions, exportOptions);
-    
+
     // Check if any transactions match the filter
     if (summary.totalCount === 0) {
       const rangeName = selectedDateRange?.label || 'selected date range';
       Alert.alert('No Data', `No transactions found for ${rangeName}.`);
       return;
     }
-    
+
     // For web, export directly (Alert dialogs don't work well in React Native Web)
-    if (typeof window !== 'undefined') {
+    if (Platform.OS === 'web') {
       const result = await exportTransactionsToCSV(transactions, exportOptions);
       if (result.success) {
         const rangeName = selectedDateRange?.label || 'all time';
@@ -55,13 +53,13 @@ export default function AppHeader({ user, onSignOut, transactions }: AppHeaderPr
       }
       return;
     }
-    
+
     // For mobile, show confirmation dialog with summary
     const rangeName = selectedDateRange?.label || 'all time';
-    const dateRangeText = summary.dateRange.start && summary.dateRange.end 
+    const dateRangeText = summary.dateRange.start && summary.dateRange.end
       ? `\nDate Range: ${summary.dateRange.start} to ${summary.dateRange.end}`
       : '';
-    
+
     Alert.alert(
       'Export Transactions',
       `Export ${summary.totalCount} transactions for ${rangeName}?${dateRangeText}\n\nIncome: ${summary.incomeCount} transactions ($${summary.totalIncome.toLocaleString()})\nExpenses: ${summary.expenseCount} transactions ($${summary.totalExpenses.toLocaleString()})`,
@@ -80,6 +78,16 @@ export default function AppHeader({ user, onSignOut, transactions }: AppHeaderPr
         }
       ]
     );
+  };
+
+  const handleDateRangeSelected = (selectedDateRange: DateRange | null) => {
+    setShowDatePicker(false);
+    // Presenting a new Alert/share sheet in the same tick as closing the date-range
+    // Modal races its dismiss animation on iOS — the new UI silently gets dropped
+    // and the export promise never resolves. Wait until the dismissal settles.
+    InteractionManager.runAfterInteractions(() => {
+      performExport(selectedDateRange);
+    });
   };
 
   return (
