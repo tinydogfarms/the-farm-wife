@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "the-farm-wife",
-    "slug": "the-farm-wife",
+    "slug": "the-farm-wife-clean",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -30,6 +30,7 @@
       "eas": {
         "projectId": "469744fa-d8b7-42fb-84c7-b08e8ce3223f"
       }
-    }
+    },
+    "owner": "haynesaj1"
   }
 }
