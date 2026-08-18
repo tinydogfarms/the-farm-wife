@@ -24,11 +24,11 @@ export const INCOME_CATEGORIES = [
 ] as const;
 
 export const PROMPT_EXAMPLES = [
-  "We bought a ton of feed on February 1 for $700",
-  "Sold 50 head of cattle on March 15th for $45,000",
-  "Purchased fertilizer for $1,200 yesterday",
-  "Received crop insurance payment of $8,500 on May 20",
-  "Paid veterinary bill of $450 today",
+  "Bought 50lbs of feed on 8/1 for $32",
+  "Sold 2 dozen eggs for $12 yesterday",
+  "Paid vet bill of $85 for the goats today",
+  "Bought 3 bags of grain on May 20 for $18",
+  "Sold tomatoes at the farmers market for $15 on June 10",
 ] as const;
 
 export type ExpenseCategory = typeof EXPENSE_CATEGORIES[number];

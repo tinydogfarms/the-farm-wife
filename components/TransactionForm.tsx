@@ -156,9 +156,12 @@ export default function TransactionForm({ onSubmit, initialData, editTransaction
       <Text style={styles.label}>Amount</Text>
       <TextInput
         style={styles.input}
-        value={formData.amount.toString()}
-        onChangeText={(text) => setFormData({...formData, amount: parseFloat(text) || 0})}
-        placeholder="0.00"
+        value={formData.amount ? `$${formData.amount}` : ''}
+        onChangeText={(text) => {
+          const cleaned = text.replace(/[$,]/g, '');
+          setFormData({...formData, amount: parseFloat(cleaned) || 0});
+        }}
+        placeholder="$0.00"
         keyboardType="numeric"
       />
 

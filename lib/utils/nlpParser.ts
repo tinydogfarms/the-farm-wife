@@ -64,37 +64,46 @@ export function parseNaturalLanguage(input: string): Partial<TransactionInput> {
     yesterday.setDate(today.getDate() - 1);
     date = yesterday.toISOString().split('T')[0];
   } else {
-    // Try various date patterns
-    const datePatterns = [
-      /(\w+)\s+(\d{1,2}),?\s*(\d{4})?/,  // "February 1, 2024" or "February 1"
-      /(\d{1,2})\/(\d{1,2})\/(\d{2,4})/,  // "2/1/24" or "2/1/2024"
-      /(\d{1,2})-(\d{1,2})-(\d{2,4})/,   // "2-1-24"
-      /(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?/  // "February 1st"
+    // Try various date patterns. Numeric formats are tried first since they're
+    // unambiguous. The month-name pattern matches only actual month words (not \w+)
+    // — a generic "<word> <1-2 digits>" pattern false-matches unrelated text, e.g.
+    // "sold 50 head..." or "bought 500lbs..." both read as a month name + day.
+    const monthNameAlternation = [...months, ...shortMonths].join('|');
+    const datePatterns: Array<{ regex: RegExp; kind: 'numeric' | 'month' }> = [
+      { regex: /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/, kind: 'numeric' },  // "8/1" or "8/1/2024"
+      { regex: /(\d{1,2})-(\d{1,2})(?:-(\d{2,4}))?/, kind: 'numeric' },   // "8-1" or "8-1-2024"
+      { regex: new RegExp(`\\b(${monthNameAlternation})\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?,?\\s*(\\d{4})?`), kind: 'month' }  // "February 1, 2024" or "Feb 1st"
     ];
-    
-    for (const pattern of datePatterns) {
-      const match = text.match(pattern);
-      if (match) {
-        if (pattern === datePatterns[0] || pattern === datePatterns[3]) {
-          // Month name format
-          const monthName = match[1].toLowerCase();
-          const monthIndex = months.findIndex(m => m.startsWith(monthName)) || 
-                           shortMonths.findIndex(m => m.startsWith(monthName));
-          if (monthIndex >= 0) {
-            const month = String(monthIndex + 1).padStart(2, '0');
-            const day = String(match[2]).padStart(2, '0');
-            const year = match[3] || currentYear;
-            date = `${year}-${month}-${day}`;
-          }
-        } else {
-          // Numeric format
-          const month = String(match[1]).padStart(2, '0');
+
+    for (const { regex, kind } of datePatterns) {
+      const match = text.match(regex);
+      if (!match) continue;
+
+      let parsedDate = '';
+      if (kind === 'month') {
+        const monthName = match[1];
+        let monthIndex = months.indexOf(monthName);
+        if (monthIndex < 0) monthIndex = shortMonths.indexOf(monthName);
+        if (monthIndex >= 0) {
+          const month = String(monthIndex + 1).padStart(2, '0');
           const day = String(match[2]).padStart(2, '0');
-          let year = match[3];
-          if (year && year.length === 2) year = '20' + year;
-          if (!year) year = currentYear.toString();
-          date = `${year}-${month}-${day}`;
+          const year = match[3] || currentYear;
+          parsedDate = `${year}-${month}-${day}`;
         }
+      } else {
+        const month = String(match[1]).padStart(2, '0');
+        const day = String(match[2]).padStart(2, '0');
+        let year = match[3];
+        if (year && year.length === 2) year = '20' + year;
+        if (!year) year = currentYear.toString();
+        parsedDate = `${year}-${month}-${day}`;
+      }
+
+      // Only stop searching once a pattern actually produced a usable date —
+      // a matched-but-unparseable pattern (e.g. an invalid month name) must not
+      // block later, more specific patterns from being tried.
+      if (parsedDate) {
+        date = parsedDate;
         break;
       }
     }
@@ -117,8 +126,13 @@ export function parseNaturalLanguage(input: string): Partial<TransactionInput> {
     }
   }
   
-  // Generate description
-  let description = input.trim();
+  // Generate description — prefer an extracted quantity phrase (e.g. "500lbs of feed")
+  // over the full raw sentence, which is redundant once type/date/amount/category are
+  // already parsed out separately.
+  const quantityMatch = input.match(
+    /\b(\d+(?:\.\d+)?\s*(?:lbs?|pounds?|tons?|tonnes?|bags?|bales?|gal(?:lons?)?|bu(?:shels?)?|acres?|head|boxes?|crates?|bundles?|rolls?|dozen|units?))\s+(?:of\s+)?(\w+)/i
+  );
+  let description = quantityMatch ? quantityMatch[0].trim() : input.trim();
   
   return {
     date: date || new Date().toISOString().split('T')[0],
