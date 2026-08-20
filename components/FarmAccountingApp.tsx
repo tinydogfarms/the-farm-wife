@@ -3,13 +3,27 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTransactions } from '../lib/hooks/transactions';
 import { useAuth } from '../lib/hooks/auth';
-import type { TransactionInput, Transaction } from '../lib/types';
+import type { TransactionInput, Transaction, CategoryTotals } from '../lib/types';
 
 import AppHeader from './AppHeader';
 import SummaryCards from './SummaryCards';
+import CategorySummary from './CategorySummary';
 import NaturalLanguageInput from './NaturalLanguageInput';
 import TransactionForm from './TransactionForm';
 import TransactionList from './TransactionList';
+
+function getYtdCategoryTotals(transactions: Transaction[], type: 'income' | 'expense'): CategoryTotals {
+  const currentYear = String(new Date().getFullYear());
+  const categoryTotals: CategoryTotals = {};
+
+  transactions
+    .filter(t => t.type === type && t.date.startsWith(currentYear))
+    .forEach(t => {
+      categoryTotals[t.category] = (categoryTotals[t.category] || 0) + parseFloat(t.amount.toString());
+    });
+
+  return categoryTotals;
+}
 
 export default function FarmAccountingApp() {
   const { user, signOut } = useAuth();
@@ -19,6 +33,8 @@ export default function FarmAccountingApp() {
   
   const [formData, setFormData] = useState<Partial<TransactionInput>>({});
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [showIncomeCategories, setShowIncomeCategories] = useState(false);
+  const [showExpenseCategories, setShowExpenseCategories] = useState(false);
 
 
   const handleAddTransaction = async (transactionData: TransactionInput) => {
@@ -66,6 +82,8 @@ export default function FarmAccountingApp() {
 
 
   const totals = getTotals();
+  const incomeByCategory = getYtdCategoryTotals(transactions, 'income');
+  const expensesByCategory = getYtdCategoryTotals(transactions, 'expense');
 
   if (loading) {
     return (
@@ -82,12 +100,22 @@ export default function FarmAccountingApp() {
       contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
     >
       <AppHeader user={user} onSignOut={handleSignOut} transactions={transactions} />
-      <SummaryCards totals={totals} />
+      <SummaryCards
+        totals={totals}
+        onIncomePress={() => setShowIncomeCategories(prev => !prev)}
+        onExpensePress={() => setShowExpenseCategories(prev => !prev)}
+      />
+      <CategorySummary
+        incomeByCategory={incomeByCategory}
+        expensesByCategory={expensesByCategory}
+        showIncome={showIncomeCategories}
+        showExpenses={showExpenseCategories}
+      />
 
       <NaturalLanguageInput onParsed={handleNaturalLanguageParsed} />
 
-      <TransactionForm 
-        onSubmit={handleAddTransaction} 
+      <TransactionForm
+        onSubmit={handleAddTransaction}
         initialData={formData}
         editTransaction={editingTransaction || undefined}
         onUpdate={handleUpdateTransaction}

@@ -1,23 +1,37 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import type { TransactionTotals } from '../lib/types';
 
 interface SummaryCardsProps {
   totals: TransactionTotals;
+  onIncomePress?: () => void;
+  onExpensePress?: () => void;
 }
 
-export default function SummaryCards({ totals }: SummaryCardsProps) {
+export default function SummaryCards({ totals, onIncomePress, onExpensePress }: SummaryCardsProps) {
   return (
     <View style={styles.summaryRow}>
-      <View style={[styles.summaryCard, styles.incomeCard]}>
+      <TouchableOpacity
+        style={[styles.summaryCard, styles.incomeCard]}
+        onPress={onIncomePress}
+        disabled={!onIncomePress}
+        activeOpacity={0.7}
+      >
         <Text style={styles.summaryLabel}>Income</Text>
         <Text style={styles.summaryAmount}>${totals.income.toLocaleString()}</Text>
-      </View>
-      
-      <View style={[styles.summaryCard, styles.expenseCard]}>
+        {onIncomePress && <Text style={styles.tapHint}>Tap for details</Text>}
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.summaryCard, styles.expenseCard]}
+        onPress={onExpensePress}
+        disabled={!onExpensePress}
+        activeOpacity={0.7}
+      >
         <Text style={styles.summaryLabel}>Expenses</Text>
         <Text style={styles.summaryAmount}>${totals.expenses.toLocaleString()}</Text>
-      </View>
-      
+        {onExpensePress && <Text style={styles.tapHint}>Tap for details</Text>}
+      </TouchableOpacity>
+
       <View style={[styles.summaryCard, totals.profit >= 0 ? styles.profitCard : styles.lossCard]}>
         <Text style={styles.summaryLabel}>{totals.profit >= 0 ? 'Profit' : 'Loss'}</Text>
         <Text style={styles.summaryAmount}>${Math.abs(totals.profit).toLocaleString()}</Text>
@@ -63,5 +77,10 @@ const styles = StyleSheet.create({
   summaryAmount: {
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  tapHint: {
+    fontSize: 10,
+    color: '#999',
+    marginTop: 4,
   },
 });
