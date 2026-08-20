@@ -25,7 +25,7 @@ function getYtdCategoryTotals(transactions: Transaction[], type: 'income' | 'exp
   return categoryTotals;
 }
 
-export default function FarmAccountingApp() {
+export default function FinanceApp() {
   const { user, signOut } = useAuth();
   const { transactions, loading, addTransaction, updateTransaction, deleteTransaction, getTotals } = useTransactions();
   const insets = useSafeAreaInsets();

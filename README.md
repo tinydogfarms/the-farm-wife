@@ -85,7 +85,7 @@ A modern farm accounting app built with React Native and Expo. Designed specific
 │   ├── CategorySummary.tsx # YTD income/expense breakdown by category
 │   ├── DateRangePicker.tsx # Date range selector for filtering/export
 │   ├── Dropdown.tsx       # Custom dropdown component
-│   ├── FarmAccountingApp.tsx # Main app container
+│   ├── FinanceApp.tsx     # Finance screen (transactions, receipts, reports)
 │   ├── NaturalLanguageInput.tsx # AI text parsing
 │   ├── ReceiptCapture.tsx # Camera/photo capture + AI receipt scanning
 │   ├── SummaryCards.tsx   # Financial summary display
