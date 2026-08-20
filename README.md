@@ -10,14 +10,16 @@ A modern farm accounting app built with React Native and Expo. Designed specific
 ## ✨ Features
 
 ### 📱 Core Functionality
-- **User Authentication** - Secure login/signup with Supabase Auth
+- **User Authentication** - Secure login/signup with Supabase Auth, with show/hide password toggle
 - **Transaction Management** - Add, view, and delete farm transactions
 - **Schedule F Categories** - Pre-configured IRS Schedule F income/expense categories
 - **Natural Language Input** - AI-powered transaction parsing ("sold 50 cattle for $45,000")
 - **Receipt Capture** - Take photos of receipts and attach to transactions
 - **Financial Summaries** - Real-time income, expense, and profit calculations
+- **YTD Category Breakdown** - Tap-to-reveal summary tiles showing income/expenses by category
 
 ### 🧠 Smart Features  
+- **AI Receipt Scanning** - Snap a photo of a receipt and Claude vision extracts the date, category, description, and amount to pre-fill the transaction form
 - **Intelligent Category Detection** - Automatically categorizes based on description
 - **Enhanced Amount Parsing** - Handles multiple numbers, prioritizes dollar amounts
 - **Date Recognition** - Supports various date formats including "today", "yesterday"
@@ -28,6 +30,8 @@ A modern farm accounting app built with React Native and Expo. Designed specific
 - **Cash vs Accrual** - Support for both accounting methods
 - **Receipt Storage** - Secure cloud storage for receipt images
 - **Transaction History** - Complete audit trail with timestamps
+- **CSV Export** - Export transactions (with receipt image URLs) filtered by date range, type, or category
+- **Date Range Filtering** - Filter by current year, last year, any prior year, or a custom range
 
 ## 🚀 Getting Started
 
@@ -50,10 +54,8 @@ A modern farm accounting app built with React Native and Expo. Designed specific
    ```
 
 3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   Add your Supabase credentials to `.env`:
+
+   Create a `.env` file in the project root with your Supabase credentials:
    ```
    EXPO_PUBLIC_SUPABASE_URL=your-supabase-url
    EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
@@ -62,6 +64,7 @@ A modern farm accounting app built with React Native and Expo. Designed specific
 4. **Set up Supabase database**
    - Run the SQL commands in `supabase-setup.sql` in your Supabase SQL Editor
    - This creates the transactions table and receipt storage bucket
+   - Deploy the `parse-receipt` Edge Function (`supabase/functions/parse-receipt`) and set an `ANTHROPIC_API_KEY` secret on your Supabase project for AI receipt scanning to work
 
 5. **Start the development server**
    ```bash
@@ -79,10 +82,12 @@ A modern farm accounting app built with React Native and Expo. Designed specific
 │   └── auth/              # Authentication screens
 ├── components/            # Reusable UI components
 │   ├── AppHeader.tsx      # Main app header with user info
+│   ├── CategorySummary.tsx # YTD income/expense breakdown by category
+│   ├── DateRangePicker.tsx # Date range selector for filtering/export
 │   ├── Dropdown.tsx       # Custom dropdown component
 │   ├── FarmAccountingApp.tsx # Main app container
 │   ├── NaturalLanguageInput.tsx # AI text parsing
-│   ├── ReceiptCapture.tsx # Camera/photo functionality
+│   ├── ReceiptCapture.tsx # Camera/photo capture + AI receipt scanning
 │   ├── SummaryCards.tsx   # Financial summary display
 │   ├── TransactionForm.tsx # Transaction entry form
 │   └── TransactionList.tsx # Transaction history
@@ -92,6 +97,9 @@ A modern farm accounting app built with React Native and Expo. Designed specific
 │   ├── services/         # External service integrations
 │   ├── types/           # TypeScript type definitions
 │   └── utils/           # Utility functions
+├── supabase/
+│   └── functions/
+│       └── parse-receipt/ # Edge Function: Claude vision receipt parsing
 └── assets/              # Images and static assets
 ```
 
@@ -129,6 +137,7 @@ The app requires these storage policies for receipt images:
 ### Receipt Management
 - **Take Photo**: Use in-app camera with receipt positioning guide  
 - **Gallery**: Select existing photos from device
+- **AI Scan**: Claude vision reads the receipt and pre-fills date, category, description, and amount
 - **View**: Thumbnails shown in transaction history
 - **Remove**: Delete receipt photos anytime
 
@@ -136,7 +145,9 @@ The app requires these storage policies for receipt images:
 - View real-time summaries on main screen
 - Track income vs expenses
 - Monitor profit/loss
-- Filter by date ranges (coming soon)
+- Tap summary tiles to reveal YTD breakdown by category
+- Filter by date range (current year, last year, any prior year, or custom range)
+- Export filtered transactions to CSV, including receipt image URLs
 
 ## 🛠️ Development
 
@@ -161,8 +172,7 @@ The app requires these storage policies for receipt images:
 
 ## 📋 Roadmap
 
-- [ ] Expense categories breakdown charts
-- [ ] Export to CSV/PDF for tax filing
+- [ ] Export to PDF for tax filing
 - [ ] Offline support and sync
 - [ ] Multi-farm/entity support
 - [ ] Recurring transaction templates
