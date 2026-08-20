@@ -5,26 +5,49 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
 
 export class StorageService {
-  private static readonly BUCKET_NAME = 'receipts';
+  private static readonly RECEIPTS_BUCKET = 'receipts';
+  private static readonly LIVESTOCK_PHOTOS_BUCKET = 'livestock-photos';
 
   /**
    * Upload a receipt image to Supabase storage
    */
   static async uploadReceiptImage(
-    imageUri: string, 
-    userId: string, 
+    imageUri: string,
+    userId: string,
     transactionId?: string
   ): Promise<{ publicUrl: string | null; error: Error | null }> {
+    if (!imageUri) return { publicUrl: null, error: null };
+    const fileName = `${userId}/${Date.now()}_${Math.random().toString(36).substring(2)}.jpg`;
+    return this.uploadImage(this.RECEIPTS_BUCKET, imageUri, fileName);
+  }
+
+  static async deleteReceiptImage(imageUrl: string): Promise<{ error: Error | null }> {
+    return this.deleteImage(this.RECEIPTS_BUCKET, imageUrl);
+  }
+
+  /**
+   * Upload a livestock photo to Supabase storage
+   */
+  static async uploadLivestockPhoto(
+    imageUri: string,
+    userId: string,
+    livestockId?: string
+  ): Promise<{ publicUrl: string | null; error: Error | null }> {
+    if (!imageUri) return { publicUrl: null, error: null };
+    const fileName = `${userId}/${Date.now()}_${Math.random().toString(36).substring(2)}.jpg`;
+    return this.uploadImage(this.LIVESTOCK_PHOTOS_BUCKET, imageUri, fileName);
+  }
+
+  static async deleteLivestockPhoto(imageUrl: string): Promise<{ error: Error | null }> {
+    return this.deleteImage(this.LIVESTOCK_PHOTOS_BUCKET, imageUrl);
+  }
+
+  private static async uploadImage(
+    bucket: string,
+    imageUri: string,
+    fileName: string
+  ): Promise<{ publicUrl: string | null; error: Error | null }> {
     try {
-      if (!imageUri) {
-        return { publicUrl: null, error: null };
-      }
-
-      // Generate unique filename
-      const timestamp = Date.now();
-      const randomId = Math.random().toString(36).substring(2);
-      const fileName = `${userId}/${timestamp}_${randomId}.jpg`;
-
       let fileData: Uint8Array;
 
       // Handle different platforms
@@ -65,7 +88,7 @@ export class StorageService {
 
       // Upload to Supabase storage
       const { data, error } = await supabase.storage
-        .from(this.BUCKET_NAME)
+        .from(bucket)
         .upload(fileName, fileData, {
           contentType: 'image/jpeg',
           cacheControl: '3600',
@@ -78,7 +101,7 @@ export class StorageService {
 
       // Get public URL
       const { data: publicUrlData } = supabase.storage
-        .from(this.BUCKET_NAME)
+        .from(bucket)
         .getPublicUrl(fileName);
 
       return { 
@@ -95,25 +118,22 @@ export class StorageService {
     }
   }
 
-  /**
-   * Delete a receipt image from storage
-   */
-  static async deleteReceiptImage(imageUrl: string): Promise<{ error: Error | null }> {
+  private static async deleteImage(bucket: string, imageUrl: string): Promise<{ error: Error | null }> {
     try {
-      if (!imageUrl || !imageUrl.includes(this.BUCKET_NAME)) {
+      if (!imageUrl || !imageUrl.includes(bucket)) {
         return { error: null };
       }
 
       // Extract file path from URL
-      const urlParts = imageUrl.split(`${this.BUCKET_NAME}/`);
+      const urlParts = imageUrl.split(`${bucket}/`);
       if (urlParts.length < 2) {
         return { error: new Error('Invalid image URL') };
       }
-      
+
       const filePath = urlParts[1].split('?')[0]; // Remove query parameters
 
       const { error } = await supabase.storage
-        .from(this.BUCKET_NAME)
+        .from(bucket)
         .remove([filePath]);
 
       return { error };
@@ -125,18 +145,18 @@ export class StorageService {
   }
 
   /**
-   * Check if storage bucket exists and is accessible
+   * Check if a storage bucket exists and is accessible
    */
-  static async checkBucketAccess(): Promise<boolean> {
+  static async checkBucketAccess(bucket: string = this.RECEIPTS_BUCKET): Promise<boolean> {
     try {
       const { data, error } = await supabase.storage.listBuckets();
-      
+
       if (error) {
         console.error('Bucket access error:', error);
         return false;
       }
 
-      const bucketExists = data?.some(bucket => bucket.name === this.BUCKET_NAME);
+      const bucketExists = data?.some(b => b.name === bucket);
       return bucketExists || false;
 
     } catch (error) {

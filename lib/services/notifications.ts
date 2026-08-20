@@ -39,8 +39,9 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export async function scheduleServiceDueNotification(
-  equipmentName: string,
-  record: { service_type: string; next_due: string }
+  entityName: string,
+  record: { label: string; next_due: string },
+  titleSuffix: string = 'service due'
 ): Promise<string | null> {
   const dueDate = new Date(record.next_due);
 
@@ -55,8 +56,8 @@ export async function scheduleServiceDueNotification(
 
   return Notifications.scheduleNotificationAsync({
     content: {
-      title: `${equipmentName} service due`,
-      body: record.service_type,
+      title: `${entityName} ${titleSuffix}`,
+      body: record.label,
     },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dueDate },
   });

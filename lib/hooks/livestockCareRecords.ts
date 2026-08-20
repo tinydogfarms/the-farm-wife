@@ -4,10 +4,10 @@ import { useAuth } from './auth';
 import { getReadableError } from '../utils/errorHandler';
 import { calculateNextDue } from '../utils/recurrence';
 import { scheduleServiceDueNotification, cancelNotification } from '../services/notifications';
-import type { ServiceRecord, ServiceRecordInput } from '../types';
+import type { LivestockCareRecord, LivestockCareRecordInput } from '../types';
 
-export function useServiceRecords() {
-  const [records, setRecords] = useState<ServiceRecord[]>([]);
+export function useLivestockCareRecords() {
+  const [records, setRecords] = useState<LivestockCareRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
@@ -16,26 +16,30 @@ export function useServiceRecords() {
 
     setLoading(true);
     const { data, error } = await supabase
-      .from('equipment_service_records')
+      .from('livestock_care_records')
       .select('*')
       .eq('user_id', user.id)
       .order('next_due', { ascending: true });
 
     if (error) {
-      console.error('Error loading service records:', error);
+      console.error('Error loading care records:', error);
     } else {
       setRecords(data || []);
     }
     setLoading(false);
   };
 
-  const addServiceRecord = async (input: ServiceRecordInput, equipmentName: string) => {
+  const addCareRecord = async (input: LivestockCareRecordInput, livestockName: string) => {
     if (!user) return { data: null, error: 'User not authenticated' };
 
-    const notificationId = await scheduleServiceDueNotification(equipmentName, { label: input.service_type, next_due: input.next_due });
+    const notificationId = await scheduleServiceDueNotification(
+      livestockName,
+      { label: input.care_type, next_due: input.next_due },
+      'care due'
+    );
 
     const { data, error } = await supabase
-      .from('equipment_service_records')
+      .from('livestock_care_records')
       .insert([{ ...input, user_id: user.id, notification_id: notificationId }])
       .select()
       .single();
@@ -49,14 +53,18 @@ export function useServiceRecords() {
     return { data, error: null };
   };
 
-  const updateServiceRecord = async (id: string, input: ServiceRecordInput, equipmentName: string) => {
+  const updateCareRecord = async (id: string, input: LivestockCareRecordInput, livestockName: string) => {
     if (!user) return { data: null, error: 'User not authenticated' };
 
     const existing = records.find(r => r.id === id);
-    const notificationId = await scheduleServiceDueNotification(equipmentName, { label: input.service_type, next_due: input.next_due });
+    const notificationId = await scheduleServiceDueNotification(
+      livestockName,
+      { label: input.care_type, next_due: input.next_due },
+      'care due'
+    );
 
     const { data, error } = await supabase
-      .from('equipment_service_records')
+      .from('livestock_care_records')
       .update({ ...input, notification_id: notificationId })
       .eq('id', id)
       .eq('user_id', user.id)
@@ -75,11 +83,11 @@ export function useServiceRecords() {
     return { data, error: null };
   };
 
-  const deleteServiceRecord = async (id: string) => {
+  const deleteCareRecord = async (id: string) => {
     const existing = records.find(r => r.id === id);
 
     const { error } = await supabase
-      .from('equipment_service_records')
+      .from('livestock_care_records')
       .delete()
       .eq('id', id)
       .eq('user_id', user?.id);
@@ -92,17 +100,17 @@ export function useServiceRecords() {
     return { error: error ? getReadableError(error) : null };
   };
 
-  // Marks a service record complete and, if it recurs, inserts a fresh
+  // Marks a care record complete and, if it recurs, inserts a fresh
   // pending row for the next occurrence — the completed row is never
-  // mutated beyond its own status, so full service history is preserved.
-  const completeServiceRecord = async (id: string, equipmentName: string) => {
+  // mutated beyond its own status, so full care history is preserved.
+  const completeCareRecord = async (id: string, livestockName: string) => {
     const record = records.find(r => r.id === id);
-    if (!record || !user) return { data: null, nextRecord: null, error: 'Service record not found' };
+    if (!record || !user) return { data: null, nextRecord: null, error: 'Care record not found' };
 
     const completedAt = new Date();
 
     const { data: updated, error: updateError } = await supabase
-      .from('equipment_service_records')
+      .from('livestock_care_records')
       .update({ status: 'complete', completed_at: completedAt.toISOString() })
       .eq('id', id)
       .select()
@@ -124,9 +132,9 @@ export function useServiceRecords() {
       return { data: updated, nextRecord: null, error: null };
     }
 
-    const nextInput: ServiceRecordInput = {
-      equipment_id: record.equipment_id,
-      service_type: record.service_type,
+    const nextInput: LivestockCareRecordInput = {
+      livestock_id: record.livestock_id,
+      care_type: record.care_type,
       notes: record.notes,
       recurrence_type: record.recurrence_type,
       recurrence_interval: record.recurrence_interval,
@@ -134,10 +142,14 @@ export function useServiceRecords() {
       next_due: nextDue.toISOString(),
     };
 
-    const notificationId = await scheduleServiceDueNotification(equipmentName, { label: nextInput.service_type, next_due: nextInput.next_due });
+    const notificationId = await scheduleServiceDueNotification(
+      livestockName,
+      { label: nextInput.care_type, next_due: nextInput.next_due },
+      'care due'
+    );
 
     const { data: nextRecord, error: insertError } = await supabase
-      .from('equipment_service_records')
+      .from('livestock_care_records')
       .insert([{ ...nextInput, user_id: user.id, notification_id: notificationId }])
       .select()
       .single();
@@ -158,10 +170,10 @@ export function useServiceRecords() {
   return {
     records,
     loading,
-    addServiceRecord,
-    updateServiceRecord,
-    deleteServiceRecord,
-    completeServiceRecord,
-    refreshServiceRecords: loadRecords,
+    addCareRecord,
+    updateCareRecord,
+    deleteCareRecord,
+    completeCareRecord,
+    refreshCareRecords: loadRecords,
   };
 }

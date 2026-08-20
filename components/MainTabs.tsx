@@ -4,38 +4,52 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUserSettings } from '../lib/hooks/userSettings';
 import FinanceApp from './FinanceApp';
 import EquipmentApp from './EquipmentApp';
+import LivestockApp from './LivestockApp';
 
-type Tab = 'finance' | 'equipment';
+type Tab = 'finance' | 'equipment' | 'livestock';
+
+const TAB_LABELS: Record<Tab, string> = {
+  finance: 'Finance',
+  equipment: 'Equipment',
+  livestock: 'Livestock',
+};
 
 export default function MainTabs() {
   const [activeTab, setActiveTab] = useState<Tab>('finance');
   const { isModuleEnabled } = useUserSettings();
   const insets = useSafeAreaInsets();
 
-  // Equipment isn't rolled out to every account yet — until enabled, this is
-  // exactly today's single-screen Finance app, no tab bar shown at all.
-  if (!isModuleEnabled('equipment')) {
+  const tabs: Tab[] = [
+    'finance',
+    ...(isModuleEnabled('equipment') ? (['equipment'] as const) : []),
+    ...(isModuleEnabled('livestock') ? (['livestock'] as const) : []),
+  ];
+
+  // No optional modules rolled out to this account yet — today's exact
+  // single-screen Finance app, no tab bar shown at all.
+  if (tabs.length === 1) {
     return <FinanceApp />;
   }
+
+  const currentTab = tabs.includes(activeTab) ? activeTab : 'finance';
 
   return (
     <View style={styles.container}>
       <View style={styles.screen}>
-        {activeTab === 'finance' ? <FinanceApp /> : <EquipmentApp />}
+        {currentTab === 'finance' && <FinanceApp />}
+        {currentTab === 'equipment' && <EquipmentApp />}
+        {currentTab === 'livestock' && <LivestockApp />}
       </View>
       <View style={[styles.tabBar, { paddingBottom: insets.bottom || 12 }]}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'finance' && styles.activeTab]}
-          onPress={() => setActiveTab('finance')}
-        >
-          <Text style={[styles.tabText, activeTab === 'finance' && styles.activeTabText]}>Finance</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'equipment' && styles.activeTab]}
-          onPress={() => setActiveTab('equipment')}
-        >
-          <Text style={[styles.tabText, activeTab === 'equipment' && styles.activeTabText]}>Equipment</Text>
-        </TouchableOpacity>
+        {tabs.map(tab => (
+          <TouchableOpacity
+            key={tab}
+            style={[styles.tab, currentTab === tab && styles.activeTab]}
+            onPress={() => setActiveTab(tab)}
+          >
+            <Text style={[styles.tabText, currentTab === tab && styles.activeTabText]}>{TAB_LABELS[tab]}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </View>
   );
