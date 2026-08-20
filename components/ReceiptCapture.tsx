@@ -2,15 +2,34 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Image, Modal, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { resizeReceiptImage } from '../lib/utils/imageResize';
+import { parseReceiptImage } from '../lib/services/receiptParser';
+import type { TransactionInput } from '../lib/types';
 
 interface ReceiptCaptureProps {
   onImageCaptured: (imageUri: string) => void;
+  onReceiptParsed?: (parsed: Partial<TransactionInput>) => void;
   capturedImage?: string;
 }
 
-export default function ReceiptCapture({ onImageCaptured, capturedImage }: ReceiptCaptureProps) {
+export default function ReceiptCapture({ onImageCaptured, onReceiptParsed, capturedImage }: ReceiptCaptureProps) {
   const [showCamera, setShowCamera] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
+
+  const analyzeReceipt = async (uri: string) => {
+    if (!onReceiptParsed) return;
+
+    setAnalyzing(true);
+    try {
+      const { data } = await parseReceiptImage(uri);
+      if (data) {
+        onReceiptParsed(data);
+      }
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   const requestCameraPermission = async () => {
     if (!permission) {
@@ -30,8 +49,10 @@ export default function ReceiptCapture({ onImageCaptured, capturedImage }: Recei
         });
         
         if (photo && photo.uri) {
-          onImageCaptured(photo.uri);
+          const resizedUri = await resizeReceiptImage(photo.uri);
+          onImageCaptured(resizedUri);
           setShowCamera(false);
+          analyzeReceipt(resizedUri);
         }
       } catch (error) {
         console.error('Error taking picture:', error);
@@ -56,7 +77,9 @@ export default function ReceiptCapture({ onImageCaptured, capturedImage }: Recei
       });
 
       if (!result.canceled && result.assets[0]) {
-        onImageCaptured(result.assets[0].uri);
+        const resizedUri = await resizeReceiptImage(result.assets[0].uri);
+        onImageCaptured(resizedUri);
+        analyzeReceipt(resizedUri);
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -100,6 +123,7 @@ export default function ReceiptCapture({ onImageCaptured, capturedImage }: Recei
       {capturedImage ? (
         <View style={styles.imageContainer}>
           <Image source={{ uri: capturedImage }} style={styles.receiptImage} />
+          {analyzing && <Text style={styles.analyzingText}>Analyzing receipt...</Text>}
           <View style={styles.imageActions}>
             <TouchableOpacity style={styles.actionButton} onPress={removeImage}>
               <Text style={styles.actionButtonText}>Remove</Text>
@@ -202,6 +226,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 8,
     gap: 12,
+  },
+  analyzingText: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontStyle: 'italic',
+    marginTop: 6,
   },
   actionButton: {
     paddingVertical: 6,

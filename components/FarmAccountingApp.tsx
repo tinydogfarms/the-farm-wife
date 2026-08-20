@@ -120,6 +120,7 @@ export default function FarmAccountingApp() {
         editTransaction={editingTransaction || undefined}
         onUpdate={handleUpdateTransaction}
         onCancel={handleCancelEdit}
+        onReceiptParsed={handleNaturalLanguageParsed}
       />
 
       <TransactionList 

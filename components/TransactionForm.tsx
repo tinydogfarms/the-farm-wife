@@ -12,10 +12,11 @@ interface TransactionFormProps {
   editTransaction?: Transaction;
   onUpdate?: (id: string, data: TransactionInput) => Promise<void>;
   onCancel?: () => void;
+  onReceiptParsed?: (parsed: Partial<TransactionInput>) => void;
 }
 
 
-export default function TransactionForm({ onSubmit, initialData, editTransaction, onUpdate, onCancel }: TransactionFormProps) {
+export default function TransactionForm({ onSubmit, initialData, editTransaction, onUpdate, onCancel, onReceiptParsed }: TransactionFormProps) {
   const [formData, setFormData] = useState<TransactionInput>({
     date: new Date().toISOString().split('T')[0],
     type: 'expense',
@@ -115,6 +116,7 @@ export default function TransactionForm({ onSubmit, initialData, editTransaction
         value={formData.date}
         onChangeText={(text) => setFormData({...formData, date: text})}
         placeholder="YYYY-MM-DD"
+        placeholderTextColor="#9ca3af"
       />
 
       <Text style={styles.label}>Type</Text>
@@ -151,6 +153,7 @@ export default function TransactionForm({ onSubmit, initialData, editTransaction
         value={formData.description}
         onChangeText={(text) => setFormData({...formData, description: text})}
         placeholder="e.g., Purchased feed for cattle"
+        placeholderTextColor="#9ca3af"
       />
 
       <Text style={styles.label}>Amount</Text>
@@ -162,11 +165,13 @@ export default function TransactionForm({ onSubmit, initialData, editTransaction
           setFormData({...formData, amount: parseFloat(cleaned) || 0});
         }}
         placeholder="$0.00"
+        placeholderTextColor="#9ca3af"
         keyboardType="numeric"
       />
 
       <ReceiptCapture
         onImageCaptured={(imageUri) => setFormData({...formData, receipt_image: imageUri})}
+        onReceiptParsed={onReceiptParsed}
         capturedImage={formData.receipt_image}
       />
 
@@ -217,6 +222,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     fontSize: 16,
+    color: '#111827',
   },
   typeButtons: {
     flexDirection: 'row',
