@@ -43,6 +43,7 @@ export default function NaturalLanguageInput({ onParsed }: NaturalLanguageInputP
         value={promptInput}
         onChangeText={setPromptInput}
         placeholder="e.g., We bought a ton of feed on February 1 for $700"
+        placeholderTextColor="#9ca3af"
         multiline
         numberOfLines={3}
       />
@@ -113,6 +114,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     minHeight: 80,
     textAlignVertical: 'top',
+    color: '#111827',
   },
   parseButton: {
     backgroundColor: '#10b981',
