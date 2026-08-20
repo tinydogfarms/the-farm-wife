@@ -8,6 +8,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { signIn, signUp } = useAuth();
 
   const handleAuth = async () => {
@@ -33,34 +34,51 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.form}>
         <Text style={styles.title}>The Farm Wife</Text>
-        
+        <Text style={styles.subtitle}>
+          {isSignUp ? 'Create Your Account' : 'Welcome Back'}
+        </Text>
+
+        <Text style={styles.label}>Email</Text>
         <TextInput
           style={styles.input}
-          placeholder="Email"
+          placeholder="you@example.com"
+          placeholderTextColor="#9ca3af"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
         />
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-        
+
+        <Text style={styles.label}>Password</Text>
+        <View style={styles.passwordRow}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Enter your password"
+            placeholderTextColor="#9ca3af"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <TouchableOpacity
+            style={styles.showButton}
+            onPress={() => setShowPassword(!showPassword)}
+          >
+            <Text style={styles.showButtonText}>
+              {showPassword ? 'Hide' : 'Show'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity
-          style={styles.button}
+          style={[styles.button, isSignUp && styles.buttonSignUp]}
           onPress={handleAuth}
           disabled={loading}
         >
           <Text style={styles.buttonText}>
-            {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+            {loading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={styles.linkButton}
           onPress={() => setIsSignUp(!isSignUp)}
@@ -97,7 +115,20 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
+    marginBottom: 4,
+    color: '#111827',
+  },
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
     marginBottom: 20,
+    color: '#6b7280',
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 6,
   },
   input: {
     borderWidth: 1,
@@ -106,12 +137,38 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 12,
     fontSize: 16,
+    color: '#111827',
+  },
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 12,
+    fontSize: 16,
+    color: '#111827',
+  },
+  showButton: {
+    paddingHorizontal: 12,
+  },
+  showButtonText: {
+    color: '#2563eb',
+    fontWeight: '600',
+    fontSize: 14,
   },
   button: {
     backgroundColor: '#2563eb',
     padding: 15,
     borderRadius: 8,
     marginBottom: 12,
+  },
+  buttonSignUp: {
+    backgroundColor: '#16a34a',
   },
   buttonText: {
     color: 'white',
