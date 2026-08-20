@@ -7,6 +7,11 @@ interface EquipmentListProps {
   onEdit: (equipment: Equipment) => void;
 }
 
+function getEquipmentSubtitle(item: Equipment): string {
+  const parts = [item.year ? String(item.year) : null, item.make, item.model].filter(Boolean);
+  return parts.join(' ');
+}
+
 export default function EquipmentList({ equipment, onDelete, onEdit }: EquipmentListProps) {
   const confirmDelete = (id: string) => {
     Alert.alert(
@@ -32,6 +37,8 @@ export default function EquipmentList({ equipment, onDelete, onEdit }: Equipment
           <View style={styles.itemInfo}>
             <Text style={styles.itemName}>{item.name}</Text>
             <Text style={styles.itemCategory}>{item.category}</Text>
+            {!!getEquipmentSubtitle(item) && <Text style={styles.itemNotes}>{getEquipmentSubtitle(item)}</Text>}
+            {!!item.serial_number && <Text style={styles.itemNotes}>SN: {item.serial_number}</Text>}
             {!!item.notes && <Text style={styles.itemNotes}>{item.notes}</Text>}
           </View>
           <TouchableOpacity

@@ -27,12 +27,16 @@ FOR DELETE USING (auth.uid() = user_id);
 
 -- 2. Equipment table
 CREATE TABLE IF NOT EXISTS equipment (
-  id         uuid primary key default gen_random_uuid(),
-  user_id    uuid not null references auth.users on delete cascade,
-  name       text not null,
-  category   text not null,
-  notes      text,
-  created_at timestamptz not null default now()
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null references auth.users on delete cascade,
+  name          text not null,
+  category      text not null,
+  year          integer,
+  make          text,
+  model         text,
+  serial_number text,
+  notes         text,
+  created_at    timestamptz not null default now()
 );
 
 CREATE INDEX IF NOT EXISTS idx_equipment_user_id ON equipment(user_id);

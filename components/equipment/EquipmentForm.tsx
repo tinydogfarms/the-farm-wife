@@ -4,6 +4,7 @@ import type { EquipmentInput, Equipment } from '../../lib/types';
 import { EQUIPMENT_CATEGORIES } from '../../lib/constants';
 import { getReadableError } from '../../lib/utils/errorHandler';
 import Dropdown from '../Dropdown';
+import TagScanner from './TagScanner';
 
 interface EquipmentFormProps {
   onSubmit: (data: EquipmentInput) => Promise<void>;
@@ -12,7 +13,7 @@ interface EquipmentFormProps {
   onCancel?: () => void;
 }
 
-const EMPTY_FORM: EquipmentInput = { name: '', category: '', notes: '' };
+const EMPTY_FORM: EquipmentInput = { name: '', category: '', year: null, make: '', model: '', serial_number: '', notes: '' };
 
 export default function EquipmentForm({ onSubmit, editEquipment, onUpdate, onCancel }: EquipmentFormProps) {
   const [formData, setFormData] = useState<EquipmentInput>(EMPTY_FORM);
@@ -23,10 +24,24 @@ export default function EquipmentForm({ onSubmit, editEquipment, onUpdate, onCan
       setFormData({
         name: editEquipment.name,
         category: editEquipment.category,
+        year: editEquipment.year ?? null,
+        make: editEquipment.make || '',
+        model: editEquipment.model || '',
+        serial_number: editEquipment.serial_number || '',
         notes: editEquipment.notes || '',
       });
     }
   }, [editEquipment]);
+
+  const handleTagScanned = (parsed: Partial<EquipmentInput>) => {
+    setFormData(prev => ({
+      ...prev,
+      make: parsed.make || prev.make,
+      model: parsed.model || prev.model,
+      year: parsed.year ?? prev.year,
+      serial_number: parsed.serial_number || prev.serial_number,
+    }));
+  };
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
@@ -75,6 +90,50 @@ export default function EquipmentForm({ onSubmit, editEquipment, onUpdate, onCan
         options={EQUIPMENT_CATEGORIES}
         onSelect={(category) => setFormData({ ...formData, category })}
         placeholder="Select a category"
+      />
+
+      <TagScanner onScanned={handleTagScanned} />
+
+      <Text style={styles.label}>Year</Text>
+      <TextInput
+        style={styles.input}
+        value={formData.year ? String(formData.year) : ''}
+        onChangeText={(text) => {
+          const digits = text.replace(/[^0-9]/g, '');
+          setFormData({ ...formData, year: digits ? parseInt(digits, 10) : null });
+        }}
+        placeholder="e.g., 2018"
+        placeholderTextColor="#9ca3af"
+        keyboardType="number-pad"
+        maxLength={4}
+      />
+
+      <Text style={styles.label}>Make</Text>
+      <TextInput
+        style={styles.input}
+        value={formData.make}
+        onChangeText={(text) => setFormData({ ...formData, make: text })}
+        placeholder="e.g., John Deere"
+        placeholderTextColor="#9ca3af"
+      />
+
+      <Text style={styles.label}>Model</Text>
+      <TextInput
+        style={styles.input}
+        value={formData.model}
+        onChangeText={(text) => setFormData({ ...formData, model: text })}
+        placeholder="e.g., 5075E"
+        placeholderTextColor="#9ca3af"
+      />
+
+      <Text style={styles.label}>Serial Number</Text>
+      <TextInput
+        style={styles.input}
+        value={formData.serial_number}
+        onChangeText={(text) => setFormData({ ...formData, serial_number: text })}
+        placeholder="e.g., 1L05075EASE123456"
+        placeholderTextColor="#9ca3af"
+        autoCapitalize="characters"
       />
 
       <Text style={styles.label}>Notes</Text>

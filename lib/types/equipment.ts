@@ -6,12 +6,20 @@ export interface Equipment {
   user_id: string;
   name: string;
   category: string;
+  year?: number | null;
+  make?: string;
+  model?: string;
+  serial_number?: string;
   notes?: string;
 }
 
 export interface EquipmentInput {
   name: string;
   category: string;
+  year?: number | null;
+  make?: string;
+  model?: string;
+  serial_number?: string;
   notes?: string;
 }
 
