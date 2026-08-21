@@ -18,8 +18,15 @@ const TAB_LABELS: Record<Tab, string> = {
 
 export default function MainTabs() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
-  const { isModuleEnabled } = useUserSettings();
+  const { isModuleEnabled, loading } = useUserSettings();
   const insets = useSafeAreaInsets();
+
+  // Wait for module gating to load before deciding the tab set — otherwise
+  // Equipment/Livestock briefly read as disabled (settings still null) and
+  // the tab bar visibly grows once they load in.
+  if (loading) {
+    return <View style={styles.container} />;
+  }
 
   const tabs: Tab[] = [
     'home',
@@ -56,6 +63,7 @@ export default function MainTabs() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f9fafb',
   },
   screen: {
     flex: 1,
