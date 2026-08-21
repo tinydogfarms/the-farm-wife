@@ -1,6 +1,6 @@
 # The Farm Wife 🚜
 
-A modern farm accounting app built with React Native and Expo. Designed specifically for agricultural businesses to track income, expenses, and maintain Schedule F tax records.
+A companion app for a farmer's entire day-to-day, built with React Native and Expo — equipment service history, livestock care, and (still) farm accounting with Schedule F tax records, all in one place.
 
 ![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![Expo](https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white)
