@@ -82,6 +82,7 @@ export default function EquipmentForm({ onSubmit, editEquipment, onUpdate, onCan
         onChangeText={(text) => setFormData({ ...formData, name: text })}
         placeholder="e.g., John Deere 5075E"
         placeholderTextColor="#9ca3af"
+        autoCapitalize="words"
       />
 
       <Dropdown

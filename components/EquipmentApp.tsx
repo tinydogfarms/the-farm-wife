@@ -11,6 +11,7 @@ import EquipmentForm from './equipment/EquipmentForm';
 import EquipmentList from './equipment/EquipmentList';
 import ServiceRecordForm from './equipment/ServiceRecordForm';
 import ServiceRecordList from './equipment/ServiceRecordList';
+import ServiceHistoryList from './equipment/ServiceHistoryList';
 
 export default function EquipmentApp() {
   const insets = useSafeAreaInsets();
@@ -101,6 +102,12 @@ export default function EquipmentApp() {
         onEdit={setEditingRecord}
         onDelete={handleDeleteRecord}
         onComplete={handleComplete}
+      />
+
+      <ServiceHistoryList
+        records={records}
+        equipmentById={equipmentById}
+        onDelete={handleDeleteRecord}
       />
     </ScrollView>
   );

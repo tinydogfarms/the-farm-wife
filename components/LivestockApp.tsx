@@ -11,6 +11,7 @@ import LivestockForm from './livestock/LivestockForm';
 import LivestockList from './livestock/LivestockList';
 import CareRecordForm from './livestock/CareRecordForm';
 import CareRecordList from './livestock/CareRecordList';
+import CareHistoryList from './livestock/CareHistoryList';
 
 export default function LivestockApp() {
   const insets = useSafeAreaInsets();
@@ -101,6 +102,12 @@ export default function LivestockApp() {
         onEdit={setEditingRecord}
         onDelete={handleDeleteRecord}
         onComplete={handleComplete}
+      />
+
+      <CareHistoryList
+        records={records}
+        livestockById={livestockById}
+        onDelete={handleDeleteRecord}
       />
     </ScrollView>
   );

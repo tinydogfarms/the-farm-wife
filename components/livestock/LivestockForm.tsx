@@ -119,6 +119,7 @@ export default function LivestockForm({ onSubmit, editLivestock, onUpdate, onCan
         onChangeText={(text) => setFormData({ ...formData, name: text })}
         placeholder={formData.tracking_type === 'group' ? 'e.g., South Pasture Cattle' : 'e.g., Bessie'}
         placeholderTextColor="#9ca3af"
+        autoCapitalize="words"
       />
 
       <Dropdown
@@ -136,6 +137,7 @@ export default function LivestockForm({ onSubmit, editLivestock, onUpdate, onCan
         onChangeText={(text) => setFormData({ ...formData, breed: text })}
         placeholder="Optional"
         placeholderTextColor="#9ca3af"
+        autoCapitalize="words"
       />
 
       {formData.tracking_type === 'group' ? (
@@ -146,7 +148,7 @@ export default function LivestockForm({ onSubmit, editLivestock, onUpdate, onCan
             value={formData.count ? String(formData.count) : ''}
             onChangeText={(text) => {
               const digits = text.replace(/[^0-9]/g, '');
-              setFormData({ ...formData, count: digits ? parseInt(digits, 10) : 1 });
+              setFormData({ ...formData, count: digits ? parseInt(digits, 10) : 0 });
             }}
             placeholder="e.g., 40"
             placeholderTextColor="#9ca3af"
