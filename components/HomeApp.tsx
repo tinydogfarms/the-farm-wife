@@ -58,9 +58,7 @@ export default function HomeApp({ userSettings, weather }: HomeAppProps) {
             <Text style={styles.weatherBlurb}>{formatBlurb(today)}</Text>
           ) : showLoading ? (
             <Text style={styles.weatherStatus}>Checking today's weather...</Text>
-          ) : (
-            <View style={styles.weatherSkeleton} />
-          )}
+          ) : null}
           <TouchableOpacity onPress={() => setEditingLocation(true)}>
             <Text style={styles.changeLocationText}>Change location</Text>
           </TouchableOpacity>
@@ -118,13 +116,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
     marginTop: 8,
-  },
-  weatherSkeleton: {
-    marginTop: 8,
-    height: 20,
-    width: '60%',
-    borderRadius: 4,
-    backgroundColor: '#e5e7eb',
   },
   weatherError: {
     fontSize: 14,

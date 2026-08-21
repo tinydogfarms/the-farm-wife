@@ -47,9 +47,7 @@ export default function WelcomeScreen({ onContinue, settings, weather }: Welcome
           </Text>
         ) : showLoading ? (
           <Text style={styles.weatherBlurb}>Checking today's weather...</Text>
-        ) : (
-          <View style={styles.weatherSkeleton} />
-        )}
+        ) : null}
       </View>
 
       <TouchableOpacity style={styles.continueButton} onPress={onContinue}>
@@ -84,13 +82,6 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     marginTop: 24,
     lineHeight: 22,
-  },
-  weatherSkeleton: {
-    marginTop: 24,
-    height: 22,
-    width: '70%',
-    borderRadius: 4,
-    backgroundColor: '#e5e7eb',
   },
   continueButton: {
     backgroundColor: '#2563eb',
