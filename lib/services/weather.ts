@@ -2,6 +2,11 @@ import type { Forecast, ForecastPeriod } from '../types';
 
 const NWS_USER_AGENT = 'the-farm-wife (tinydogfarms@gmail.com)';
 
+// NWS's points->forecast-URL mapping is stable per coordinate, so caching
+// it in memory skips that round trip on repeat fetches within a session
+// (e.g. Welcome screen then Home tab moments later).
+const forecastUrlCache = new Map<string, string>();
+
 interface GeocodeResult {
   latitude: number;
   longitude: number;
@@ -66,18 +71,24 @@ export async function fetchForecast(
   longitude: number
 ): Promise<{ data: Forecast | null; error: string | null }> {
   try {
-    const pointsResponse = await fetch(`https://api.weather.gov/points/${latitude},${longitude}`, {
-      headers: { 'User-Agent': NWS_USER_AGENT, Accept: 'application/geo+json' },
-    });
+    const cacheKey = `${latitude},${longitude}`;
+    let forecastUrl = forecastUrlCache.get(cacheKey);
 
-    if (!pointsResponse.ok) {
-      return { data: null, error: 'Weather data is not available for this location.' };
-    }
-
-    const pointsJson = await pointsResponse.json();
-    const forecastUrl = pointsJson?.properties?.forecast;
     if (!forecastUrl) {
-      return { data: null, error: 'Weather data is not available for this location.' };
+      const pointsResponse = await fetch(`https://api.weather.gov/points/${latitude},${longitude}`, {
+        headers: { 'User-Agent': NWS_USER_AGENT, Accept: 'application/geo+json' },
+      });
+
+      if (!pointsResponse.ok) {
+        return { data: null, error: 'Weather data is not available for this location.' };
+      }
+
+      const pointsJson = await pointsResponse.json();
+      forecastUrl = pointsJson?.properties?.forecast;
+      if (!forecastUrl) {
+        return { data: null, error: 'Weather data is not available for this location.' };
+      }
+      forecastUrlCache.set(cacheKey, forecastUrl);
     }
 
     const forecastResponse = await fetch(forecastUrl, {

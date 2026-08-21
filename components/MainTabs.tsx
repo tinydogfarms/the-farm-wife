@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useUserSettings } from '../lib/hooks/userSettings';
+import type { useUserSettings } from '../lib/hooks/userSettings';
+import type { useWeather } from '../lib/hooks/weather';
 import HomeApp from './HomeApp';
 import FinanceApp from './FinanceApp';
 import EquipmentApp from './EquipmentApp';
@@ -16,9 +17,14 @@ const TAB_LABELS: Record<Tab, string> = {
   livestock: 'Livestock',
 };
 
-export default function MainTabs() {
+interface MainTabsProps {
+  userSettings: ReturnType<typeof useUserSettings>;
+  weather: ReturnType<typeof useWeather>;
+}
+
+export default function MainTabs({ userSettings, weather }: MainTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('home');
-  const { isModuleEnabled, loading } = useUserSettings();
+  const { isModuleEnabled, loading } = userSettings;
   const insets = useSafeAreaInsets();
 
   // Wait for module gating to load before deciding the tab set — otherwise
@@ -40,7 +46,7 @@ export default function MainTabs() {
   return (
     <View style={styles.container}>
       <View style={styles.screen}>
-        {currentTab === 'home' && <HomeApp />}
+        {currentTab === 'home' && <HomeApp userSettings={userSettings} weather={weather} />}
         {currentTab === 'finance' && <FinanceApp />}
         {currentTab === 'equipment' && <EquipmentApp />}
         {currentTab === 'livestock' && <LivestockApp />}

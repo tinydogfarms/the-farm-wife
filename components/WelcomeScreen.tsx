@@ -1,11 +1,13 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useUserSettings } from '../lib/hooks/userSettings';
-import { useWeather } from '../lib/hooks/weather';
 import { formatBlurb } from '../lib/services/weather';
+import type { UserSettings } from '../lib/types';
+import type { useWeather } from '../lib/hooks/weather';
 
 interface WelcomeScreenProps {
   onContinue: () => void;
+  settings: UserSettings | null;
+  weather: ReturnType<typeof useWeather>;
 }
 
 function getGreeting(): string {
@@ -24,31 +26,30 @@ function getDateLine(): string {
   return `Today is ${formatted}`;
 }
 
-export default function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
+export default function WelcomeScreen({ onContinue, settings, weather }: WelcomeScreenProps) {
   const insets = useSafeAreaInsets();
-  const { settings } = useUserSettings();
-  const { forecast, showLoading, hasLocation } = useWeather(settings?.latitude ?? null, settings?.longitude ?? null);
-
-  const getWeatherBlurb = () => {
-    if (!hasLocation) {
-      return "Set your farm's ZIP code on the Home tab to see today's weather here.";
-    }
-    if (!forecast) {
-      return showLoading ? 'Checking today\'s weather...' : '';
-    }
-    const [today] = forecast.periods;
-    if (!today) {
-      return "Today's weather isn't available right now.";
-    }
-    return `${formatBlurb(today)} — ${settings?.location_label}`;
-  };
+  const { forecast, showLoading, hasLocation } = weather;
+  const [today] = forecast?.periods ?? [];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 24 }]}>
       <View style={styles.content}>
         <Text style={styles.greeting}>{getGreeting()} 😘</Text>
         <Text style={styles.dateLine}>{getDateLine()}</Text>
-        <Text style={styles.weatherBlurb}>{getWeatherBlurb()}</Text>
+
+        {!hasLocation ? (
+          <Text style={styles.weatherBlurb}>
+            Set your farm's ZIP code on the Home tab to see today's weather here.
+          </Text>
+        ) : today ? (
+          <Text style={styles.weatherBlurb}>
+            {formatBlurb(today)} — {settings?.location_label}
+          </Text>
+        ) : showLoading ? (
+          <Text style={styles.weatherBlurb}>Checking today's weather...</Text>
+        ) : (
+          <View style={styles.weatherSkeleton} />
+        )}
       </View>
 
       <TouchableOpacity style={styles.continueButton} onPress={onContinue}>
@@ -83,6 +84,13 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     marginTop: 24,
     lineHeight: 22,
+  },
+  weatherSkeleton: {
+    marginTop: 24,
+    height: 22,
+    width: '70%',
+    borderRadius: 4,
+    backgroundColor: '#e5e7eb',
   },
   continueButton: {
     backgroundColor: '#2563eb',
