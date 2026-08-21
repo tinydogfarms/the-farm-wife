@@ -1,16 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useUserSettings } from './userSettings';
 import { fetchForecast } from '../services/weather';
 import type { Forecast } from '../types';
 
-export function useWeather() {
-  const { settings } = useUserSettings();
+export function useWeather(latitude: number | null, longitude: number | null) {
   const [forecast, setForecast] = useState<Forecast | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const latitude = settings?.latitude ?? null;
-  const longitude = settings?.longitude ?? null;
 
   const refresh = async () => {
     if (latitude == null || longitude == null) return;

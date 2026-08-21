@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { useUserSettings } from '../../lib/hooks/userSettings';
 
 interface LocationSetupFormProps {
   initialZip?: string;
+  onSave: (zip: string) => Promise<{ error: string | null }>;
   onSaved?: () => void;
   onCancel?: () => void;
 }
 
-export default function LocationSetupForm({ initialZip, onSaved, onCancel }: LocationSetupFormProps) {
-  const { setFarmLocation } = useUserSettings();
+export default function LocationSetupForm({ initialZip, onSave, onSaved, onCancel }: LocationSetupFormProps) {
   const [zip, setZip] = useState(initialZip || '');
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +19,7 @@ export default function LocationSetupForm({ initialZip, onSaved, onCancel }: Loc
     }
 
     setLoading(true);
-    const { error } = await setFarmLocation(zip.trim());
+    const { error } = await onSave(zip.trim());
     setLoading(false);
 
     if (error) {

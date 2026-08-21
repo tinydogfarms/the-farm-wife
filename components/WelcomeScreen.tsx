@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useUserSettings } from '../lib/hooks/userSettings';
 import { useWeather } from '../lib/hooks/weather';
 import { formatBlurb } from '../lib/services/weather';
 
@@ -25,7 +26,8 @@ function getDateLine(): string {
 
 export default function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
   const insets = useSafeAreaInsets();
-  const { forecast, loading, hasLocation } = useWeather();
+  const { settings } = useUserSettings();
+  const { forecast, loading, hasLocation } = useWeather(settings?.latitude ?? null, settings?.longitude ?? null);
 
   const getWeatherBlurb = () => {
     if (!hasLocation) {

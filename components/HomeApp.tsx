@@ -11,8 +11,8 @@ import LocationSetupForm from './home/LocationSetupForm';
 export default function HomeApp() {
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
-  const { settings } = useUserSettings();
-  const { forecast, loading, error, hasLocation } = useWeather();
+  const { settings, setFarmLocation } = useUserSettings();
+  const { forecast, loading, error, hasLocation } = useWeather(settings?.latitude ?? null, settings?.longitude ?? null);
   const [editingLocation, setEditingLocation] = useState(false);
 
   useEffect(() => {
@@ -41,6 +41,7 @@ export default function HomeApp() {
       {!hasLocation || editingLocation ? (
         <LocationSetupForm
           initialZip={settings?.zip_code || ''}
+          onSave={setFarmLocation}
           onSaved={() => setEditingLocation(false)}
           onCancel={hasLocation ? () => setEditingLocation(false) : undefined}
         />
