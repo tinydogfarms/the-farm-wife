@@ -65,23 +65,37 @@ what's next and why, not how to run the app.
   (`@react-native-community/datetimepicker`, via a shared `DatePicker`
   component) on service/care due-date fields and the transaction date
   field, replacing free-text YYYY-MM-DD entry everywhere in the app.
+- **Weather integration + Welcome screen** (merged to `main` 2026-08-20) —
+  a splash-style Welcome screen shown once per app launch after login
+  (time-of-day greeting, today's date, a weather blurb that always states
+  the chance of rain), plus a new **Home tab** — the first genuinely
+  always-visible tab, not gated behind `user_settings.enabled_modules`
+  like Equipment/Livestock. Weather comes from the National Weather
+  Service (`api.weather.gov`, free, no API key, US-only) for a
+  hand-entered ZIP code (no device GPS); `lib/services/weather.ts` /
+  `lib/hooks/weather.ts`. No rain-alert notifications — the chance of
+  rain is just always part of the blurb text, scope narrowed from the
+  original "basic rain alerts" ask once it was clear that's simpler and
+  is what was actually wanted. In-person testing surfaced a real
+  architectural bug (see decision log) plus several UX rough edges, all
+  fixed except one: a minor Welcome-screen flash tracked under Known
+  issues below. Deliberate behavior change: every account now sees at
+  least a 2-tab bar (Home/Finance), where zero-module accounts previously
+  saw a bare single-screen Finance app with no tab bar at all.
 
 ## Next up (prioritized 2026-08-20 — see decision log)
 
 Pivot items first, since they're the current product direction; finance
 backlog carried over below but deprioritized.
 
-1. **Weather / rain alerts** — standalone, no dependency on the entity
-   pattern, but needs a weather API integration and likely
-   `expo-notifications` (now a dependency, added for equipment service
-   reminders) for alerting.
-2. **Field-level tracking** — most complex: ties yield, expense, and service
+1. **Field-level tracking** — most complex: ties yield, expense, and service
    records together across a field. Best done now that equipment/livestock
    have validated the entity+recurrence data model.
-3. **Reminders & calendar** (day-of-week orientation, birthdays) — likely a
+2. **Reminders & calendar** (day-of-week orientation, birthdays) — likely a
    thin UI layer once the recurrence engine is salvaged; sequence after at
-   least one real entity (equipment) exists to remind about.
-4. Carried over from README's old roadmap checklist (deprioritized below the
+   least one real entity (equipment) exists to remind about. The Home tab
+   (see Built) is the natural place for these to surface.
+3. Carried over from README's old roadmap checklist (deprioritized below the
    pivot, not dropped): PDF export for tax filing, offline support and sync,
    multi-farm/entity support, recurring transaction templates, bank account
    integration, mileage tracking, equipment depreciation calculator.
@@ -170,3 +184,29 @@ date, decision, why. This is what keeps future-you from re-litigating things.)
   one gets added. README's framing/tagline still describes the app as
   accounting-first and is not yet updated to match — a follow-up docs
   pass, not bundled into a feature branch.
+- **2026-08-20** — Weather + Welcome screen built and merged same day.
+  Scope narrowed mid-build: "basic rain alerts" (a scheduled/immediate
+  local notification) turned into "always state the rain chance in the
+  weather text" once it was clear that's what was actually wanted — no
+  notification channel, no dedupe tracking, meaningfully simpler than
+  planned. Also surfaced and fixed a real architectural bug worth
+  remembering for the next feature: `useUserSettings()` (and by extension
+  `useWeather()`, which composed it) has no shared store — every call site
+  gets its own independent fetch-once state. `HomeApp`, `LocationSetupForm`,
+  `MainTabs`, and `useWeather()` were each calling it separately, so a
+  write in one (saving a ZIP) never reached the others reading it
+  (`hasLocation` staying false, the ZIP form never disappearing; the tab
+  bar computing Equipment/Livestock as disabled during its own load and
+  visibly growing once loaded). Fixed by calling these hooks once at the
+  top (`App.js`) and passing the results down as props — the same
+  prop-drilling pattern Equipment/Livestock already used for their own
+  hooks, just hadn't been applied to `userSettings`/`weather` yet. Why
+  this matters going forward: any new feature reading or writing
+  `user_settings` (Reminders, Field-level tracking's likely settings) must
+  either receive settings as a prop from a single call site or be aware
+  this footgun exists — it cost three rounds of bug reports before the
+  actual root cause was found. One known issue remains unresolved (see
+  Known issues) despite this fix and two follow-up performance/UX passes
+  (NWS forecast-URL caching, a skeleton placeholder that was tried and
+  then reverted for making things worse) — deferred to a polish pass
+  rather than continuing to guess at it mid-feature.
