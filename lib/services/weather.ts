@@ -9,13 +9,17 @@ interface GeocodeResult {
 }
 
 /**
- * Formats a forecast period into a short blurb, e.g. "64°F, Partly
- * Cloudy, 20% chance of rain". Always states the rain chance, defaulting
- * a null (NWS-omitted) probability to 0 rather than hiding the clause.
+ * Formats a forecast period into a short blurb, e.g. "Tonight: 55°F,
+ * Partly Cloudy, 20% chance of rain". Always names the period — NWS's
+ * forecast endpoint gives 12-hour day/night blocks, not a live current
+ * reading, so "Today" carries the day's high and "Tonight" carries the
+ * low; naming it avoids the low reading as if it were the current temp.
+ * Always states the rain chance, defaulting a null (NWS-omitted)
+ * probability to 0 rather than hiding the clause.
  */
 export function formatBlurb(period: ForecastPeriod): string {
   const rainChance = period.precipitationChance ?? 0;
-  return `${period.temperature}°${period.temperatureUnit}, ${period.shortForecast}, ${rainChance}% chance of rain`;
+  return `${period.name}: ${period.temperature}°${period.temperatureUnit}, ${period.shortForecast}, ${rainChance}% chance of rain`;
 }
 
 /**
@@ -72,7 +76,6 @@ export async function fetchForecast(
 
     const pointsJson = await pointsResponse.json();
     const forecastUrl = pointsJson?.properties?.forecast;
-    const relativeLocation = pointsJson?.properties?.relativeLocation?.properties;
     if (!forecastUrl) {
       return { data: null, error: 'Weather data is not available for this location.' };
     }
@@ -101,12 +104,8 @@ export async function fetchForecast(
       precipitationChance: period.probabilityOfPrecipitation?.value ?? null,
     }));
 
-    const locationLabel = relativeLocation
-      ? `${relativeLocation.city}, ${relativeLocation.state}`
-      : '';
-
     return {
-      data: { locationLabel, periods, fetchedAt: new Date().toISOString() },
+      data: { periods, fetchedAt: new Date().toISOString() },
       error: null,
     };
   } catch (error) {

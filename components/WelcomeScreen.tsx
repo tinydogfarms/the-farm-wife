@@ -40,7 +40,7 @@ export default function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
     if (!today) {
       return "Today's weather isn't available right now.";
     }
-    return `${formatBlurb(today)} — ${forecast.locationLabel}`;
+    return `${formatBlurb(today)} — ${settings?.location_label}`;
   };
 
   return (

@@ -9,7 +9,6 @@ export interface ForecastPeriod {
 }
 
 export interface Forecast {
-  locationLabel: string;
   periods: ForecastPeriod[];
   fetchedAt: string;
 }
