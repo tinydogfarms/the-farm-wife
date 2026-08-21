@@ -11,7 +11,7 @@ import LocationSetupForm from './home/LocationSetupForm';
 export default function HomeApp() {
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
-  const { settings, setFarmLocation } = useUserSettings();
+  const { settings, loading: settingsLoading, setFarmLocation } = useUserSettings();
   const { forecast, loading, error, hasLocation } = useWeather(settings?.latitude ?? null, settings?.longitude ?? null);
   const [editingLocation, setEditingLocation] = useState(false);
 
@@ -38,7 +38,7 @@ export default function HomeApp() {
         </View>
       </View>
 
-      {!hasLocation || editingLocation ? (
+      {settingsLoading ? null : !hasLocation || editingLocation ? (
         <LocationSetupForm
           initialZip={settings?.zip_code || ''}
           onSave={setFarmLocation}

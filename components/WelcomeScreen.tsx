@@ -46,7 +46,7 @@ export default function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
   return (
     <View style={[styles.container, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 24 }]}>
       <View style={styles.content}>
-        <Text style={styles.greeting}>{getGreeting()}</Text>
+        <Text style={styles.greeting}>{getGreeting()} 😘</Text>
         <Text style={styles.dateLine}>{getDateLine()}</Text>
         <Text style={styles.weatherBlurb}>{getWeatherBlurb()}</Text>
       </View>
