@@ -1,41 +1,52 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useUserSettings } from '../lib/hooks/userSettings';
+import type { useUserSettings } from '../lib/hooks/userSettings';
+import type { useWeather } from '../lib/hooks/weather';
+import HomeApp from './HomeApp';
 import FinanceApp from './FinanceApp';
 import EquipmentApp from './EquipmentApp';
 import LivestockApp from './LivestockApp';
 
-type Tab = 'finance' | 'equipment' | 'livestock';
+type Tab = 'home' | 'finance' | 'equipment' | 'livestock';
 
 const TAB_LABELS: Record<Tab, string> = {
+  home: 'Home',
   finance: 'Finance',
   equipment: 'Equipment',
   livestock: 'Livestock',
 };
 
-export default function MainTabs() {
-  const [activeTab, setActiveTab] = useState<Tab>('finance');
-  const { isModuleEnabled } = useUserSettings();
+interface MainTabsProps {
+  userSettings: ReturnType<typeof useUserSettings>;
+  weather: ReturnType<typeof useWeather>;
+}
+
+export default function MainTabs({ userSettings, weather }: MainTabsProps) {
+  const [activeTab, setActiveTab] = useState<Tab>('home');
+  const { isModuleEnabled, loading } = userSettings;
   const insets = useSafeAreaInsets();
 
+  // Wait for module gating to load before deciding the tab set — otherwise
+  // Equipment/Livestock briefly read as disabled (settings still null) and
+  // the tab bar visibly grows once they load in.
+  if (loading) {
+    return <View style={styles.container} />;
+  }
+
   const tabs: Tab[] = [
+    'home',
     'finance',
     ...(isModuleEnabled('equipment') ? (['equipment'] as const) : []),
     ...(isModuleEnabled('livestock') ? (['livestock'] as const) : []),
   ];
 
-  // No optional modules rolled out to this account yet — today's exact
-  // single-screen Finance app, no tab bar shown at all.
-  if (tabs.length === 1) {
-    return <FinanceApp />;
-  }
-
-  const currentTab = tabs.includes(activeTab) ? activeTab : 'finance';
+  const currentTab = tabs.includes(activeTab) ? activeTab : 'home';
 
   return (
     <View style={styles.container}>
       <View style={styles.screen}>
+        {currentTab === 'home' && <HomeApp userSettings={userSettings} weather={weather} />}
         {currentTab === 'finance' && <FinanceApp />}
         {currentTab === 'equipment' && <EquipmentApp />}
         {currentTab === 'livestock' && <LivestockApp />}
@@ -58,6 +69,7 @@ export default function MainTabs() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f9fafb',
   },
   screen: {
     flex: 1,
