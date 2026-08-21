@@ -4,6 +4,7 @@ import type { TransactionInput, Transaction } from '../lib/types';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../lib/constants';
 import { validateTransaction, getReadableError } from '../lib/utils/errorHandler';
 import Dropdown from './Dropdown';
+import DatePicker from './DatePicker';
 import ReceiptCapture from './ReceiptCapture';
 
 interface TransactionFormProps {
@@ -110,13 +111,10 @@ export default function TransactionForm({ onSubmit, initialData, editTransaction
     <View style={styles.formCard}>
       <Text style={styles.formTitle}>{editTransaction ? 'Edit Transaction' : 'Add Transaction'}</Text>
       
-      <Text style={styles.label}>Date</Text>
-      <TextInput
-        style={styles.input}
+      <DatePicker
+        label="Date"
         value={formData.date}
-        onChangeText={(text) => setFormData({...formData, date: text})}
-        placeholder="YYYY-MM-DD"
-        placeholderTextColor="#9ca3af"
+        onChange={(date) => setFormData({...formData, date})}
       />
 
       <Text style={styles.label}>Type</Text>
