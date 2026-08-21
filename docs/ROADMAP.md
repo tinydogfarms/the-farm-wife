@@ -6,13 +6,16 @@ never edited from chat.
 
 ## What this is
 
-Started as a Schedule F farm accounting app (React Native/Expo/Supabase) —
-income/expense tracking, tax categories, receipt capture. Pivoting to a
-broader companion app for a farmer's day-to-day: reminders (what day it is,
-birthdays), weather/rain, equipment service history, livestock care, and
-field-level yield/expense tracking, on top of the accounting core. Solo-
-developed, Android. See README.md for setup/run instructions and current
-tech stack — this file is for what's next and why, not how to run the app.
+The Farm Wife — a companion app for a farmer's entire day-to-day, not just
+the books. Started as a Schedule F accounting app (React Native/Expo/
+Supabase); accounting is now one part of a broader whole covering
+reminders (what day it is, birthdays), weather/rain, equipment service
+history, livestock care, and field-level yield/expense tracking. Resolved
+2026-08-20 (see decision log): this is not primarily an accounting app
+that also reminds/tracks — it's a farm-life companion, full stop, that
+accounting happens to be part of. Solo-developed, Android. See README.md
+for setup/run instructions and current tech stack — this file is for
+what's next and why, not how to run the app.
 
 ## Built
 
@@ -85,13 +88,6 @@ backlog carried over below but deprioritized.
 
 ## Open decisions
 
-- Is this still primarily "an accounting app that also reminds/tracks," or
-  has the center of gravity shifted to "a farm-life companion that also does
-  accounting"? Affects README's framing/tagline, IA, and possibly the app's
-  positioning. Equipment and livestock (the first two pivot features) are
-  now merged, both still gated off by default — revisit this once they've
-  been used enough in practice to have an opinion, rather than forcing it
-  now.
 - Data model for "field" and "equipment" entities, and how service/care
   records relate to the existing reminder system. Partially informed by the
   2026-08-20 decision log entry below (salvage `recurrence.ts`, don't reuse
@@ -147,3 +143,16 @@ date, decision, why. This is what keeps future-you from re-litigating things.)
   real usability problems surfaced by hands-on testing, not scope creep —
   fixing them once, shared across equipment/livestock/finance, was cheaper
   than fixing equipment's copy now and livestock's copy later.
+- **2026-08-20** — Resolved the app-positioning open decision: this is not
+  primarily an accounting app that also reminds/tracks — it's a farm-life
+  companion, full stop, that does everything a farm wife needs, with
+  accounting as one part of that rather than the core the rest hangs off
+  of. Decided directly by the user, not inferred from usage data. Why it
+  matters going forward: IA and navigation should be designed as peer
+  modules (Finance/Equipment/Livestock/Weather/Fields/Reminders) rather
+  than "Finance plus add-ons" — `MainTabs` already treats modules this way
+  structurally, so no code change follows from this, but it should inform
+  future decisions like tab ordering and any home-screen/landing choice if
+  one gets added. README's framing/tagline still describes the app as
+  accounting-first and is not yet updated to match — a follow-up docs
+  pass, not bundled into a feature branch.
