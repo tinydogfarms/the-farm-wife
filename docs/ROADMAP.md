@@ -86,6 +86,20 @@ backlog carried over below but deprioritized.
    multi-farm/entity support, recurring transaction templates, bank account
    integration, mileage tracking, equipment depreciation calculator.
 
+## Known issues (polish backlog)
+
+- **Welcome screen weather flash** — a brief visual flash before the
+  weather blurb appears on the Welcome screen (`components/WelcomeScreen.tsx`),
+  even after: sharing one weather fetch across Welcome/Home instead of
+  each re-fetching (`App.js` now owns `useUserSettings()`/`useWeather()`
+  and passes them down), caching the NWS points→forecast-URL lookup in
+  memory (`lib/services/weather.ts`), and removing a skeleton placeholder
+  that turned out to make it worse (the placeholder itself became the pop
+  once the fetch got fast enough). Home tab doesn't show this in practice
+  since it usually inherits an already-resolved forecast from Welcome's
+  fetch. Root cause not fully nailed down — worth a proper look during a
+  polish pass rather than continuing to guess at it mid-feature.
+
 ## Open decisions
 
 - Data model for "field" and "equipment" entities, and how service/care
