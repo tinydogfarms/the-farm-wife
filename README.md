@@ -33,6 +33,24 @@ A companion app for a farmer's entire day-to-day, built with React Native and Ex
 - **CSV Export** - Export transactions (with receipt image URLs) filtered by date range, type, or category
 - **Date Range Filtering** - Filter by current year, last year, any prior year, or a custom range
 
+### 🚜 Equipment
+- **Equipment Records** - Year/Make/Model/Serial Number per piece of equipment
+- **Tag Scanning** - Photo (camera or gallery) of an equipment ID plate; Claude vision reads make/model/year/serial and pre-fills the form
+- **Service Records** - Recurring service schedules (e.g. oil changes) — one-time, every-N-days, or monthly
+- **Service History** - Completed service records, grouped by equipment
+- **Due-Date Notifications** - Local reminder when a service comes due
+
+### 🐄 Livestock
+- **Group or Individual Tracking** - Track a herd by headcount, or an individual animal with tag number and birthdate
+- **Photo Attachment** - Take or choose a photo to attach to a livestock record
+- **Care Records** - Recurring vaccination/deworming/hoof-trimming schedules — one-time, every-N-days, or monthly
+- **Care History** - Completed care records, grouped by animal or group
+- **Due-Date Notifications** - Local reminder when care comes due
+
+Equipment and Livestock are enabled per account (no in-app settings screen
+yet — see [Configuration](#-configuration)); once enabled for an account, a
+bottom tab bar appears alongside Finance.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -65,6 +83,7 @@ A companion app for a farmer's entire day-to-day, built with React Native and Ex
    - Run the SQL commands in `supabase-setup.sql` in your Supabase SQL Editor
    - This creates the transactions table and receipt storage bucket
    - Deploy the `parse-receipt` Edge Function (`supabase/functions/parse-receipt`) and set an `ANTHROPIC_API_KEY` secret on your Supabase project for AI receipt scanning to work
+   - Optional (Equipment/Livestock modules): also run `supabase-setup-equipment.sql` and `supabase-setup-livestock.sql`, and deploy the `parse-equipment-tag` Edge Function (reuses the same `ANTHROPIC_API_KEY` secret) for equipment tag scanning
 
 5. **Start the development server**
    ```bash
@@ -81,16 +100,23 @@ A companion app for a farmer's entire day-to-day, built with React Native and Ex
 ├── app/                    # App-level components
 │   └── auth/              # Authentication screens
 ├── components/            # Reusable UI components
+│   ├── MainTabs.tsx       # Bottom tab bar (Finance/Equipment/Livestock), gated per account
+│   ├── FinanceApp.tsx     # Finance screen (transactions, receipts, reports)
+│   ├── EquipmentApp.tsx   # Equipment screen (records, service schedule, history)
+│   ├── LivestockApp.tsx   # Livestock screen (records, care schedule, history)
 │   ├── AppHeader.tsx      # Main app header with user info
 │   ├── CategorySummary.tsx # YTD income/expense breakdown by category
 │   ├── DateRangePicker.tsx # Date range selector for filtering/export
+│   ├── DatePicker.tsx     # Shared native date picker
 │   ├── Dropdown.tsx       # Custom dropdown component
-│   ├── FinanceApp.tsx     # Finance screen (transactions, receipts, reports)
+│   ├── PhotoCapture.tsx   # Shared camera/gallery capture UI
 │   ├── NaturalLanguageInput.tsx # AI text parsing
-│   ├── ReceiptCapture.tsx # Camera/photo capture + AI receipt scanning
+│   ├── ReceiptCapture.tsx # Receipt photo capture + AI receipt scanning
 │   ├── SummaryCards.tsx   # Financial summary display
 │   ├── TransactionForm.tsx # Transaction entry form
-│   └── TransactionList.tsx # Transaction history
+│   ├── TransactionList.tsx # Transaction history
+│   ├── equipment/         # Equipment/service-record forms, lists, history, tag scanner
+│   └── livestock/         # Livestock/care-record forms, lists, history
 ├── lib/
 │   ├── constants/         # App constants and categories
 │   ├── hooks/            # Custom React hooks
@@ -99,7 +125,11 @@ A companion app for a farmer's entire day-to-day, built with React Native and Ex
 │   └── utils/           # Utility functions
 ├── supabase/
 │   └── functions/
-│       └── parse-receipt/ # Edge Function: Claude vision receipt parsing
+│       ├── parse-receipt/       # Edge Function: Claude vision receipt parsing
+│       └── parse-equipment-tag/ # Edge Function: Claude vision equipment tag parsing
+├── supabase-setup.sql             # Core schema: transactions, receipts bucket
+├── supabase-setup-equipment.sql   # Equipment module schema
+├── supabase-setup-livestock.sql   # Livestock module schema
 └── assets/              # Images and static assets
 ```
 
@@ -110,12 +140,24 @@ A companion app for a farmer's entire day-to-day, built with React Native and Ex
 2. Run the SQL migration in `supabase-setup.sql`
 3. Set up Row Level Security policies for the `receipts` storage bucket
 4. Add your Supabase URL and anon key to `.env`
+5. Optional — Equipment/Livestock modules: also run `supabase-setup-equipment.sql` and `supabase-setup-livestock.sql`
 
 ### Storage Policies
 The app requires these storage policies for receipt images:
 - **Upload Policy**: Users can upload receipts to their own folder
 - **View Policy**: Users can view their own receipts
 - **Delete Policy**: Users can delete their own receipts
+
+(Equipment tag photos aren't stored — they're only sent to Claude vision
+for parsing. Livestock photos get the same three policies, scoped to the
+`livestock-photos` bucket instead of `receipts`.)
+
+### Enabling Equipment/Livestock for an account
+These modules are off by default and there's no in-app settings screen yet.
+Enable one per account by inserting into `user_settings.enabled_modules`
+in the Supabase SQL Editor — see the comment at the bottom of
+`supabase-setup-equipment.sql` / `supabase-setup-livestock.sql` for the
+exact statement. Once enabled, a bottom tab bar appears in the app.
 
 ## 📱 Usage
 
@@ -172,13 +214,9 @@ The app requires these storage policies for receipt images:
 
 ## 📋 Roadmap
 
-- [ ] Export to PDF for tax filing
-- [ ] Offline support and sync
-- [ ] Multi-farm/entity support
-- [ ] Recurring transaction templates
-- [ ] Bank account integration
-- [ ] Mileage tracking
-- [ ] Equipment depreciation calculator
+See [docs/ROADMAP.md](docs/ROADMAP.md) for what's built, what's next, and
+why — that file is the maintained source of truth; this README covers
+setup and usage, not planning.
 
 ## 🤝 Contributing
 
