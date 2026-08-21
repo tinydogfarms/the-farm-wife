@@ -4,6 +4,7 @@ import type { Livestock, LivestockCareRecord, LivestockCareRecordInput, Recurren
 import { CARE_TYPES } from '../../lib/constants';
 import { getReadableError } from '../../lib/utils/errorHandler';
 import Dropdown from '../Dropdown';
+import DatePicker from '../DatePicker';
 
 interface CareRecordFormProps {
   livestock: Livestock[];
@@ -162,13 +163,10 @@ export default function CareRecordForm({ livestock, onSubmit, editRecord, onUpda
         </>
       )}
 
-      <Text style={styles.label}>Next Due Date</Text>
-      <TextInput
-        style={styles.input}
+      <DatePicker
+        label="Next Due Date"
         value={formData.next_due}
-        onChangeText={(text) => setFormData({ ...formData, next_due: text })}
-        placeholder="YYYY-MM-DD"
-        placeholderTextColor="#9ca3af"
+        onChange={(next_due) => setFormData({ ...formData, next_due })}
       />
 
       <Text style={styles.label}>Notes</Text>
