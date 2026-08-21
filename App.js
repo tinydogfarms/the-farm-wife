@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuth } from './lib/hooks/auth';
 import { useUserSettings } from './lib/hooks/userSettings';
 import { useWeather } from './lib/hooks/weather';
+import { useReminders } from './lib/hooks/reminders';
+import { registerNotificationResponseHandler } from './lib/services/notifications';
 import LoginScreen from './app/auth/login';
 import WelcomeScreen from './components/WelcomeScreen';
 import MainTabs from './components/MainTabs';
@@ -17,6 +19,13 @@ export default function App() {
   // (which meant paying the network delay twice per launch).
   const userSettings = useUserSettings();
   const weather = useWeather(userSettings.settings?.latitude ?? null, userSettings.settings?.longitude ?? null);
+  const reminders = useReminders();
+
+  // Registered exactly once — a second registration would handle every
+  // Snooze/Dismiss tap multiple times.
+  useEffect(() => {
+    return registerNotificationResponseHandler({ onCascadeDismiss: reminders.dismissCascade });
+  }, []);
 
   if (loading) {
     return (
@@ -35,7 +44,7 @@ export default function App() {
       ) : showWelcome ? (
         <WelcomeScreen onContinue={() => setShowWelcome(false)} settings={userSettings.settings} weather={weather} />
       ) : (
-        <MainTabs userSettings={userSettings} weather={weather} />
+        <MainTabs userSettings={userSettings} weather={weather} reminders={reminders} />
       )}
     </SafeAreaProvider>
   );

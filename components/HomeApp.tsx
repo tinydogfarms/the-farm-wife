@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/hooks/auth';
 import type { useUserSettings } from '../lib/hooks/userSettings';
 import type { useWeather } from '../lib/hooks/weather';
+import type { useReminders } from '../lib/hooks/reminders';
 import { formatBlurb } from '../lib/services/weather';
 import { requestNotificationPermission } from '../lib/services/notifications';
 import LocationSetupForm from './home/LocationSetupForm';
@@ -11,13 +12,24 @@ import LocationSetupForm from './home/LocationSetupForm';
 interface HomeAppProps {
   userSettings: ReturnType<typeof useUserSettings>;
   weather: ReturnType<typeof useWeather>;
+  reminders: ReturnType<typeof useReminders>;
 }
 
-export default function HomeApp({ userSettings, weather }: HomeAppProps) {
+function formatDaysUntil(occurrence: Date): string {
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const daysUntil = Math.round((occurrence.getTime() - startOfToday.getTime()) / (24 * 60 * 60 * 1000));
+  if (daysUntil === 0) return 'Today';
+  if (daysUntil === 1) return 'Tomorrow';
+  return `In ${daysUntil} days`;
+}
+
+export default function HomeApp({ userSettings, weather, reminders }: HomeAppProps) {
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
   const { settings, loading: settingsLoading, setFarmLocation } = userSettings;
   const { forecast, showLoading, error, hasLocation } = weather;
+  const { upcomingReminders } = reminders;
   const [editingLocation, setEditingLocation] = useState(false);
 
   useEffect(() => {
@@ -62,6 +74,21 @@ export default function HomeApp({ userSettings, weather }: HomeAppProps) {
           <TouchableOpacity onPress={() => setEditingLocation(true)}>
             <Text style={styles.changeLocationText}>Change location</Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {upcomingReminders.length > 0 && (
+        <View style={styles.remindersCard}>
+          <Text style={styles.remindersTitle}>Upcoming Reminders</Text>
+          {upcomingReminders.map(({ reminder, occurrence }) => (
+            <View key={reminder.id} style={styles.reminderRow}>
+              <View>
+                <Text style={styles.reminderName}>{reminder.name}</Text>
+                <Text style={styles.reminderType}>{reminder.event_type}</Text>
+              </View>
+              <Text style={styles.reminderDue}>{formatDaysUntil(occurrence)}</Text>
+            </View>
+          ))}
         </View>
       )}
     </ScrollView>
@@ -131,5 +158,40 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#2563eb',
     marginTop: 12,
+  },
+  remindersCard: {
+    backgroundColor: 'white',
+    margin: 16,
+    marginTop: 0,
+    padding: 16,
+    borderRadius: 8,
+  },
+  remindersTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  reminderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  reminderName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  reminderType: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  reminderDue: {
+    fontSize: 13,
+    color: '#6b7280',
   },
 });

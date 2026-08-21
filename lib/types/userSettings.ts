@@ -1,6 +1,6 @@
 // Module keys gate optional app sections behind a per-user flag.
-// 'equipment' and 'livestock' exist today; weather/field modules will add more.
-export type ModuleKey = 'equipment' | 'livestock';
+// 'equipment', 'livestock', and 'reminders' exist today; field modules will add more.
+export type ModuleKey = 'equipment' | 'livestock' | 'reminders';
 
 export interface UserSettings {
   id: string;

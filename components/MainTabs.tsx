@@ -3,26 +3,30 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { useUserSettings } from '../lib/hooks/userSettings';
 import type { useWeather } from '../lib/hooks/weather';
+import type { useReminders } from '../lib/hooks/reminders';
 import HomeApp from './HomeApp';
 import FinanceApp from './FinanceApp';
 import EquipmentApp from './EquipmentApp';
 import LivestockApp from './LivestockApp';
+import RemindersApp from './RemindersApp';
 
-type Tab = 'home' | 'finance' | 'equipment' | 'livestock';
+type Tab = 'home' | 'finance' | 'equipment' | 'livestock' | 'reminders';
 
 const TAB_LABELS: Record<Tab, string> = {
   home: 'Home',
   finance: 'Finance',
   equipment: 'Equipment',
   livestock: 'Livestock',
+  reminders: 'Reminders',
 };
 
 interface MainTabsProps {
   userSettings: ReturnType<typeof useUserSettings>;
   weather: ReturnType<typeof useWeather>;
+  reminders: ReturnType<typeof useReminders>;
 }
 
-export default function MainTabs({ userSettings, weather }: MainTabsProps) {
+export default function MainTabs({ userSettings, weather, reminders }: MainTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const { isModuleEnabled, loading } = userSettings;
   const insets = useSafeAreaInsets();
@@ -39,6 +43,7 @@ export default function MainTabs({ userSettings, weather }: MainTabsProps) {
     'finance',
     ...(isModuleEnabled('equipment') ? (['equipment'] as const) : []),
     ...(isModuleEnabled('livestock') ? (['livestock'] as const) : []),
+    ...(isModuleEnabled('reminders') ? (['reminders'] as const) : []),
   ];
 
   const currentTab = tabs.includes(activeTab) ? activeTab : 'home';
@@ -46,10 +51,11 @@ export default function MainTabs({ userSettings, weather }: MainTabsProps) {
   return (
     <View style={styles.container}>
       <View style={styles.screen}>
-        {currentTab === 'home' && <HomeApp userSettings={userSettings} weather={weather} />}
+        {currentTab === 'home' && <HomeApp userSettings={userSettings} weather={weather} reminders={reminders} />}
         {currentTab === 'finance' && <FinanceApp />}
         {currentTab === 'equipment' && <EquipmentApp />}
         {currentTab === 'livestock' && <LivestockApp />}
+        {currentTab === 'reminders' && <RemindersApp reminders={reminders} />}
       </View>
       <View style={[styles.tabBar, { paddingBottom: insets.bottom || 12 }]}>
         {tabs.map(tab => (
