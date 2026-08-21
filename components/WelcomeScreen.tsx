@@ -27,14 +27,14 @@ function getDateLine(): string {
 export default function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
   const insets = useSafeAreaInsets();
   const { settings } = useUserSettings();
-  const { forecast, loading, hasLocation } = useWeather(settings?.latitude ?? null, settings?.longitude ?? null);
+  const { forecast, showLoading, hasLocation } = useWeather(settings?.latitude ?? null, settings?.longitude ?? null);
 
   const getWeatherBlurb = () => {
     if (!hasLocation) {
       return "Set your farm's ZIP code on the Home tab to see today's weather here.";
     }
-    if (loading || !forecast) {
-      return 'Checking today\'s weather...';
+    if (!forecast) {
+      return showLoading ? 'Checking today\'s weather...' : '';
     }
     const [today] = forecast.periods;
     if (!today) {

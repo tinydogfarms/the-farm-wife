@@ -12,7 +12,7 @@ export default function HomeApp() {
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
   const { settings, loading: settingsLoading, setFarmLocation } = useUserSettings();
-  const { forecast, error, hasLocation } = useWeather(settings?.latitude ?? null, settings?.longitude ?? null);
+  const { forecast, showLoading, error, hasLocation } = useWeather(settings?.latitude ?? null, settings?.longitude ?? null);
   const [editingLocation, setEditingLocation] = useState(false);
 
   useEffect(() => {
@@ -48,6 +48,7 @@ export default function HomeApp() {
       ) : (
         <View style={styles.weatherCard}>
           <Text style={styles.weatherLocation}>{settings?.location_label}</Text>
+          {showLoading && !forecast && <Text style={styles.weatherStatus}>Checking today's weather...</Text>}
           {!!error && <Text style={styles.weatherError}>{error}</Text>}
           {today && <Text style={styles.weatherBlurb}>{formatBlurb(today)}</Text>}
           <TouchableOpacity onPress={() => setEditingLocation(true)}>
@@ -102,6 +103,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#111827',
+  },
+  weatherStatus: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginTop: 8,
   },
   weatherError: {
     fontSize: 14,
