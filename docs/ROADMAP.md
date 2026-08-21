@@ -37,28 +37,48 @@ tech stack — this file is for what's next and why, not how to run the app.
   notifications. Tag scanning verified in person; service records and
   notifications not yet exercised by real usage. `MainTabs` bottom-tab nav
   (Finance/Equipment) only appears once the equipment module is enabled for
-  an account — otherwise unchanged single-screen Finance app.
+  an account — otherwise unchanged single-screen Finance app. Since
+  merging, also gained: service history (completed records, previously
+  invisible once logged, now viewable grouped by equipment via
+  `ServiceHistoryList`) and a native date picker on the due-date field.
+- **Livestock care records** (merged to `main` 2026-08-20, gated off by
+  default via `user_settings.enabled_modules`, same as equipment) — a
+  `livestock` entity that's a group/herd by default (name + headcount) with
+  individually-tracked animals as an option (tag number, birthdate), plus
+  an attached photo (camera or gallery, no AI parsing — just capture and
+  store, unlike equipment's tag OCR), and `livestock_care_records` for
+  vaccination/deworming/hoof-trimming schedules reusing equipment's
+  recurrence engine and notification scheduling. `MainTabs` adds a third
+  tab when enabled. Care history view included from the start (see below).
+  Verified in person: group/individual records, photo capture, all three
+  recurrence types, completing a record. Building this surfaced two shared
+  fixes applied to both equipment and livestock: (1) completed
+  service/care records had no way to be reviewed after logging — pending
+  lists only ever showed the next occurrence — so `ServiceHistoryList`/
+  `CareHistoryList` were added; (2) a `PhotoCapture` component was
+  extracted from `ReceiptCapture`/`TagScanner` (this was the third
+  near-duplicate camera+gallery UI) and is now shared by all three photo
+  features. Also added: a native date picker
+  (`@react-native-community/datetimepicker`, via a shared `DatePicker`
+  component) on service/care due-date fields and the transaction date
+  field, replacing free-text YYYY-MM-DD entry everywhere in the app.
 
 ## Next up (prioritized 2026-08-20 — see decision log)
 
 Pivot items first, since they're the current product direction; finance
 backlog carried over below but deprioritized.
 
-1. **Livestock care records** — same entity + recurring-care-event pattern
-   as equipment (e.g. hoof trimming schedule per animal), now that equipment
-   has proven the pattern out. Reuses `lib/utils/recurrence.ts` and the
-   `user_settings.enabled_modules` gating already built for equipment.
-2. **Weather / rain alerts** — standalone, no dependency on the entity
+1. **Weather / rain alerts** — standalone, no dependency on the entity
    pattern, but needs a weather API integration and likely
    `expo-notifications` (now a dependency, added for equipment service
    reminders) for alerting.
-3. **Field-level tracking** — most complex: ties yield, expense, and service
-   records together across a field. Best done after equipment/livestock
-   validate the entity+recurrence data model.
-4. **Reminders & calendar** (day-of-week orientation, birthdays) — likely a
+2. **Field-level tracking** — most complex: ties yield, expense, and service
+   records together across a field. Best done now that equipment/livestock
+   have validated the entity+recurrence data model.
+3. **Reminders & calendar** (day-of-week orientation, birthdays) — likely a
    thin UI layer once the recurrence engine is salvaged; sequence after at
    least one real entity (equipment) exists to remind about.
-5. Carried over from README's old roadmap checklist (deprioritized below the
+4. Carried over from README's old roadmap checklist (deprioritized below the
    pivot, not dropped): PDF export for tax filing, offline support and sync,
    multi-farm/entity support, recurring transaction templates, bank account
    integration, mileage tracking, equipment depreciation calculator.
@@ -68,10 +88,10 @@ backlog carried over below but deprioritized.
 - Is this still primarily "an accounting app that also reminds/tracks," or
   has the center of gravity shifted to "a farm-life companion that also does
   accounting"? Affects README's framing/tagline, IA, and possibly the app's
-  positioning. Equipment (the first pivot feature) is now merged, but still
-  gated off by default and untested beyond tag scanning — revisit this once
-  it's been used enough in practice to have an opinion, rather than forcing
-  it now.
+  positioning. Equipment and livestock (the first two pivot features) are
+  now merged, both still gated off by default — revisit this once they've
+  been used enough in practice to have an opinion, rather than forcing it
+  now.
 - Data model for "field" and "equipment" entities, and how service/care
   records relate to the existing reminder system. Partially informed by the
   2026-08-20 decision log entry below (salvage `recurrence.ts`, don't reuse
@@ -109,3 +129,21 @@ date, decision, why. This is what keeps future-you from re-litigating things.)
   livestock care records (which reuses this branch's recurrence pattern)
   carries no risk to other users; testing continues on `main` rather than
   blocking the next feature on a separate branch.
+- **2026-08-20** — Livestock care records built and merged same day as
+  equipment. Confirmed shape mid-plan: tracking is group/herd by default
+  with individual animals as an alternative row type (not one-row-per-
+  animal-only, not bulk-apply), livestock photos are captured and stored
+  as-is (no Claude vision parsing, unlike equipment's tag OCR), and care
+  types are Vaccination/Deworming/Hoof Trimming/Other. In-person testing
+  of equipment surfaced that completed records had no way to be reviewed
+  (pending lists only show the next occurrence) — fixed for both features
+  via `ServiceHistoryList`/`CareHistoryList` rather than deferring the fix
+  to a follow-up. Also extracted `PhotoCapture` as a shared component (the
+  third near-duplicate camera+gallery UI, after `ReceiptCapture` and
+  equipment's `TagScanner`) and added a native date picker
+  (`@react-native-community/datetimepicker`) everywhere a date was
+  previously free-text — including the core transaction date field, which
+  predates the pivot. Why: both the history gap and the date-entry UX were
+  real usability problems surfaced by hands-on testing, not scope creep —
+  fixing them once, shared across equipment/livestock/finance, was cheaper
+  than fixing equipment's copy now and livestock's copy later.
