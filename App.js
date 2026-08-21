@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuth } from './lib/hooks/auth';
 import LoginScreen from './app/auth/login';
+import WelcomeScreen from './components/WelcomeScreen';
 import MainTabs from './components/MainTabs';
 
 export default function App() {
   const { user, loading } = useAuth();
+  const [showWelcome, setShowWelcome] = useState(true);
 
   if (loading) {
     return (
@@ -19,7 +22,13 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      {!user ? <LoginScreen /> : <MainTabs />}
+      {!user ? (
+        <LoginScreen />
+      ) : showWelcome ? (
+        <WelcomeScreen onContinue={() => setShowWelcome(false)} />
+      ) : (
+        <MainTabs />
+      )}
     </SafeAreaProvider>
   );
 }

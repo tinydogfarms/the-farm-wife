@@ -2,40 +2,38 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUserSettings } from '../lib/hooks/userSettings';
+import HomeApp from './HomeApp';
 import FinanceApp from './FinanceApp';
 import EquipmentApp from './EquipmentApp';
 import LivestockApp from './LivestockApp';
 
-type Tab = 'finance' | 'equipment' | 'livestock';
+type Tab = 'home' | 'finance' | 'equipment' | 'livestock';
 
 const TAB_LABELS: Record<Tab, string> = {
+  home: 'Home',
   finance: 'Finance',
   equipment: 'Equipment',
   livestock: 'Livestock',
 };
 
 export default function MainTabs() {
-  const [activeTab, setActiveTab] = useState<Tab>('finance');
+  const [activeTab, setActiveTab] = useState<Tab>('home');
   const { isModuleEnabled } = useUserSettings();
   const insets = useSafeAreaInsets();
 
   const tabs: Tab[] = [
+    'home',
     'finance',
     ...(isModuleEnabled('equipment') ? (['equipment'] as const) : []),
     ...(isModuleEnabled('livestock') ? (['livestock'] as const) : []),
   ];
 
-  // No optional modules rolled out to this account yet — today's exact
-  // single-screen Finance app, no tab bar shown at all.
-  if (tabs.length === 1) {
-    return <FinanceApp />;
-  }
-
-  const currentTab = tabs.includes(activeTab) ? activeTab : 'finance';
+  const currentTab = tabs.includes(activeTab) ? activeTab : 'home';
 
   return (
     <View style={styles.container}>
       <View style={styles.screen}>
+        {currentTab === 'home' && <HomeApp />}
         {currentTab === 'finance' && <FinanceApp />}
         {currentTab === 'equipment' && <EquipmentApp />}
         {currentTab === 'livestock' && <LivestockApp />}

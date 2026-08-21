@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../services/client';
 import { useAuth } from './auth';
+import { geocodeZip } from '../services/weather';
 import type { UserSettings, ModuleKey } from '../types';
 
 export function useUserSettings() {
@@ -49,6 +50,35 @@ export function useUserSettings() {
     loadSettings();
   }, [user]);
 
+  const setFarmLocation = async (zip: string) => {
+    if (!user) return { error: 'User not authenticated' };
+
+    const { data: geocoded, error: geocodeError } = await geocodeZip(zip);
+    if (geocodeError || !geocoded) {
+      return { error: geocodeError ?? 'Could not find that ZIP code.' };
+    }
+
+    const { data, error } = await supabase
+      .from('user_settings')
+      .update({
+        zip_code: zip.trim(),
+        latitude: geocoded.latitude,
+        longitude: geocoded.longitude,
+        location_label: geocoded.label,
+      })
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving farm location:', error);
+      return { error: 'Could not save your location. Please try again.' };
+    }
+
+    setSettings(data);
+    return { error: null };
+  };
+
   const enabledModules: ModuleKey[] = settings?.enabled_modules ?? [];
 
   return {
@@ -56,6 +86,7 @@ export function useUserSettings() {
     loading,
     enabledModules,
     isModuleEnabled: (key: ModuleKey) => enabledModules.includes(key),
+    setFarmLocation,
     refreshSettings: loadSettings,
   };
 }

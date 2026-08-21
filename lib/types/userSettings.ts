@@ -7,4 +7,8 @@ export interface UserSettings {
   created_at: string;
   user_id: string;
   enabled_modules: ModuleKey[];
+  zip_code: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  location_label: string | null;
 }
